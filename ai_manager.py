@@ -1,5 +1,8 @@
 from google import genai
+import streamlit as st
 
+
+api_key = st.secrets["GEMINI_API_KEY"]
 # -----------------------------
 # Fonction de simulation d'appel à l'API Gemini
 # -----------------------------

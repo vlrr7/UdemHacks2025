@@ -21,7 +21,6 @@ def main():
     # ----- Page d'accueil -----
     if choice == "Accueil":
         st.header("Bienvenue sur l'application HealthPro")
-        st.write("Veuillez vous connecter ou vous inscrire pour commencer.")
 
     # ----- Page de connexion -----
     elif choice == "Connexion":
