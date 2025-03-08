@@ -1,7 +1,10 @@
 google-genai
 sqlalchemy
 streamlit
+pymongo
 psycopg2-binary
 matplotlib
 pandas
 bcrypt
+bson
+Werkzeug
