@@ -9,10 +9,9 @@ import json
 import requests
 # AJOUTER PAR GEORGES POUR LE GEMINI
 from google import genai
-
+    
 
 def generateContent(input_text):
-
     client = genai.Client(api_key="YOUR_API_KEY")
     response = client.models.generate_content(
         model="gemini-2.0-flash", contents=[{"text": input_text}])
@@ -91,13 +90,13 @@ def gemini_predict(data):
     # Exemple d'appel réel :
     # response = requests.post("https://api.gemini.com/predict", json=data, headers={"Authorization": "Bearer VOTRE_CLE"})
     # return response.json()
-    # Ici, nous retournons une réponse fictive :
-     client = genai.Client(api_key="YOUR_API_KEY")
-    response = client.models.generate_content(
-        model="gemini-2.0-flash", contents=[{"text": input_text}])
-    return response.text
-
     
+    # Ici, nous retournons une réponse fictive :
+    # client = genai.Client(api_key="YOUR_API_KEY")
+    # response = client.models.generate_content(
+    #     model="gemini-2.0-flash", contents=[{"text": input_text}])
+    # return response.text
+
     prediction = {
         "risk_level": "Faible",
         "potential_conditions": ["Aucune anomalie détectée"],
