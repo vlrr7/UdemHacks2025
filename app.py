@@ -1,6 +1,6 @@
 from ai_manager import gemini_predict, evaluate_risk
 from database import session, User, DataEntry, Follow
-from connection import login, register, hash_password
+from connection import login, register
 
 import streamlit as st
 import datetime
@@ -21,13 +21,12 @@ def main():
     # ----- Page d'accueil -----
     if choice == "Accueil":
         st.header("Bienvenue sur l'application HealthPro")
-
+        st.write("Veuillez vous connecter ou vous inscrire pour commencer.")
     # ----- Page de connexion -----
     elif choice == "Connexion":
         st.header("Connexion")
         username = st.text_input("Nom d'utilisateur")
-        password = hash_password(st.text_input(
-            "Mot de passe", type="password"))
+        password = st.text_input("Mot de passe", type="password")
         if st.button("Se connecter"):
             user = login(username, password)
             if user:
@@ -41,8 +40,8 @@ def main():
         st.header("Inscription")
         username = st.text_input("Nom d'utilisateur", key="reg_username")
         email = st.text_input("Email", key="reg_email")
-        password = hash_password(st.text_input(
-            "Mot de passe", type="password", key="reg_password"))
+        password = st.text_input(
+            "Mot de passe", type="password", key="reg_password")
 
         if st.button("S'inscrire"):
             user, msg = register(username, password, email)
@@ -128,23 +127,22 @@ def main():
     # ----- Interface sociale -----
     elif choice == "Social":
         st.header("Réseau Social")
+        
         if 'user_id' not in st.session_state:
-            st.error(
-                "Veuillez vous connecter pour accéder aux fonctionnalités sociales.")
+            st.error("Veuillez vous connecter pour accéder aux fonctionnalités sociales.")
         else:
             user_id = st.session_state['user_id']
-            st.subheader("Suivre d'autres utilisateurs")
+
+            # ---- Suivre un utilisateur ----
+            st.subheader("Suivre un utilisateur")
             follow_username = st.text_input("Nom d'utilisateur à suivre")
             if st.button("Suivre"):
-                user_to_follow = session.query(User).filter_by(
-                    username=follow_username).first()
+                user_to_follow = session.query(User).filter_by(username=follow_username).first()
                 if user_to_follow:
-                    # Vérifier si l'utilisateur est déjà suivi
                     exists = session.query(Follow).filter_by(
                         follower_id=user_id, followed_id=user_to_follow.id).first()
                     if not exists:
-                        new_follow = Follow(
-                            follower_id=user_id, followed_id=user_to_follow.id)
+                        new_follow = Follow(follower_id=user_id, followed_id=user_to_follow.id)
                         session.add(new_follow)
                         session.commit()
                         st.success(f"Vous suivez désormais {follow_username}!")
@@ -153,26 +151,97 @@ def main():
                 else:
                     st.error("Utilisateur non trouvé.")
 
-            st.subheader("Fil d'actualité")
-            # Afficher les dernières entrées des utilisateurs suivis
-            follows = session.query(Follow).filter_by(
-                follower_id=user_id).all()
+            # ---- Liste des amis ----
+            st.subheader("Vos amis")
+            # Force refresh des données après une action
+            follows = session.query(Follow).filter_by(follower_id=user_id).all()
             followed_ids = [follow.followed_id for follow in follows]
-            if followed_ids:
-                entries = session.query(DataEntry)\
-                                 .filter(DataEntry.user_id.in_(followed_ids))\
-                                 .order_by(DataEntry.date.desc())\
-                                 .limit(10).all()
-                for entry in entries:
-                    user = session.query(User).filter_by(
-                        id=entry.user_id).first()
-                    st.write(
-                        f"**{user.username}** a enregistré des données le {entry.date.date()}")
-                    st.write(
-                        f"Pompes : {entry.pushups}, Repas : {entry.meals_count}, Eau : {entry.water_intake} L, Sommeil : {entry.sleep_hours} h")
-                    st.markdown("---")
+            
+            if not followed_ids:
+                st.info("Vous ne suivez personne actuellement.")
             else:
-                st.info("Vous ne suivez aucun utilisateur pour le moment.")
+                followed_users = session.query(User).filter(User.id.in_(followed_ids)).all()
+                selected_user = None
+
+                # Affichage dynamique avec colonnes
+                cols = st.columns(len(followed_users))
+                for i, friend in enumerate(followed_users):
+                    with cols[i]:
+                        # Utilisation de st.session_state pour conserver la sélection
+                        if st.button(friend.username, key=f"friend_{friend.id}"):
+                            st.session_state.selected_user_id = friend.id
+
+                # Récupération de l'utilisateur sélectionné
+                if 'selected_user_id' in st.session_state:
+                    selected_user = session.query(User).get(st.session_state.selected_user_id)
+
+                if selected_user:
+                    st.subheader(f"Statistiques de {selected_user.username}")
+                    
+                    # ---- Option Ne plus suivre ----
+                    if st.button("Ne plus suivre"):
+                        session.query(Follow).filter_by(
+                            follower_id=user_id, followed_id=selected_user.id).delete()
+                        session.commit()
+                        st.success(f"Vous ne suivez plus {selected_user.username}.")
+                        # Suppression de la sélection et rechargement
+                        del st.session_state.selected_user_id
+                        st.rerun()  # Utilisation de st.rerun() à la place de experimental_rerun()
+
+                    # ---- Affichage des données ----
+                    entries = session.query(DataEntry).filter_by(user_id=selected_user.id).order_by(DataEntry.date.desc()).all()
+                    
+                    if not entries:
+                        st.warning("Aucune donnée disponible pour cet utilisateur.")
+                    else:
+                        available_dates = [entry.date for entry in entries]
+                        selected_date = st.selectbox("Sélectionnez une date", available_dates)
+                        entry = next(e for e in entries if e.date == selected_date)
+                        
+                        st.write(f"📅 **Date:** {entry.date}")
+                        st.write(f"💪 **Pompes:** {entry.pushups}")
+                        st.write(f"🍽 **Repas:** {entry.meals_count}")
+                        st.write(f"💧 **Eau (L):** {entry.water_intake}")
+                        st.write(f"😴 **Sommeil (h):** {entry.sleep_hours}")
+                        st.write(f"📱 **Temps passé (min):** {entry.time_spent}")
+
+                        # ---- Statistiques globales ----
+                        if st.button("Voir les statistiques globales de cet utilisateur"):
+                            avg_pushups = sum(e.pushups for e in entries) / len(entries)
+                            avg_meals = sum(e.meals_count for e in entries) / len(entries)
+                            avg_water = sum(e.water_intake for e in entries) / len(entries)
+                            avg_sleep = sum(e.sleep_hours for e in entries) / len(entries)
+                            avg_time = sum(e.time_spent for e in entries) / len(entries)
+
+                            st.write("📊 **Statistiques globales**")
+                            st.write(f"💪 **Pompes moyennes:** {avg_pushups:.1f}")
+                            st.write(f"🍽 **Repas moyens:** {avg_meals:.1f}")
+                            st.write(f"💧 **Eau moyenne (L):** {avg_water:.1f}")
+                            st.write(f"😴 **Sommeil moyen (h):** {avg_sleep:.1f}")
+                            st.write(f"📱 **Temps passé moyen (min):** {avg_time:.1f}")
+
+                            # ---- Comparaison ----
+                            my_entries = session.query(DataEntry).filter_by(user_id=user_id).all()
+                            if my_entries and st.button("Comparer mes statistiques avec cet utilisateur"):
+                                my_avg_pushups = sum(e.pushups for e in my_entries)/len(my_entries)
+                                my_avg_meals = sum(e.meals_count for e in my_entries)/len(my_entries)
+                                my_avg_water = sum(e.water_intake for e in my_entries)/len(my_entries)
+                                my_avg_sleep = sum(e.sleep_hours for e in my_entries)/len(my_entries)
+                                my_avg_time = sum(e.time_spent for e in my_entries)/len(my_entries)
+
+                                df_comparison = pd.DataFrame({
+                                    "Statistique": ["Pompes", "Repas", "Eau (L)", "Sommeil (h)", "Temps (min)"],
+                                    "Moi": [my_avg_pushups, my_avg_meals, my_avg_water, my_avg_sleep, my_avg_time],
+                                    selected_user.username: [avg_pushups, avg_meals, avg_water, avg_sleep, avg_time]
+                                })
+
+                                st.subheader("📊 Comparaison des statistiques")
+                                st.dataframe(df_comparison)
+
+                                fig, ax = plt.subplots(figsize=(6, 4))
+                                df_comparison.set_index("Statistique").plot(kind="bar", ax=ax)
+                                ax.set_title(f"Comparaison: Moi vs {selected_user.username}")
+                                st.pyplot(fig)
 
     # ----- Prédictions Gemini -----
     elif choice == "Gemini Predictions":

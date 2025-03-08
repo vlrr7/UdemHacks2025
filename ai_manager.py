@@ -2,19 +2,17 @@ from google import genai
 import streamlit as st
 
 
-api_key = st.secrets["GEMINI_API_KEY"]
+api_key = "test" # st.secrets["GEMINI_API_KEY"]
 # -----------------------------
 # Fonction de simulation d'appel à l'API Gemini
 # -----------------------------
+
+
 def gemini_predict(data):
     """
     Cette fonction simule un appel à l'API Gemini.
     Pour une intégration réelle, utilisez requests pour envoyer vos données à l'API.
     """
-    # Exemple d'appel réel :
-    # response = requests.post("https://api.gemini.com/predict", json=data, headers={"Authorization": "Bearer VOTRE_CLE"})
-    # return response.json()
-
     # Ici, nous retournons une réponse fictive :
     # client = genai.Client(api_key="YOUR_API_KEY")
     # response = client.models.generate_content(
@@ -28,18 +26,20 @@ def gemini_predict(data):
     }
     return prediction
 
+
 def evaluate_risk(data):
     risk_score = 0
     conditions = []
     recommendations = []
 
     # --- Évaluation des facteurs de risque ---
-    
+
     # Manque de sommeil
     if data["avg_sleep"] < 5:
         risk_score += 3
         conditions.append("Manque de sommeil sévère")
-        recommendations.append("Essayez de dormir au moins 7 à 8 heures par nuit.")
+        recommendations.append(
+            "Essayez de dormir au moins 7 à 8 heures par nuit.")
 
     elif 5 <= data["avg_sleep"] < 6:
         risk_score += 1
@@ -55,35 +55,41 @@ def evaluate_risk(data):
     elif 1.0 <= data["avg_water"] < 1.5:
         risk_score += 1
         conditions.append("Hydratation modérée")
-        recommendations.append("Augmentez légèrement votre consommation d'eau.")
+        recommendations.append(
+            "Augmentez légèrement votre consommation d'eau.")
 
     # Activité physique faible
     if data["avg_pushups"] == 0:
         risk_score += 3
         conditions.append("Aucune activité physique")
-        recommendations.append("Essayez d'ajouter au moins 10 minutes d'exercice par jour.")
+        recommendations.append(
+            "Essayez d'ajouter au moins 10 minutes d'exercice par jour.")
 
     elif 1 <= data["avg_pushups"] < 5:
         risk_score += 1
         conditions.append("Faible activité physique")
-        recommendations.append("Augmentez votre niveau d'exercice progressivement.")
+        recommendations.append(
+            "Augmentez votre niveau d'exercice progressivement.")
 
     # Sédentarité élevée
     if data["avg_time"] > 300:
         risk_score += 2
         conditions.append("Mode de vie sédentaire")
-        recommendations.append("Réduisez le temps assis et bougez toutes les heures.")
+        recommendations.append(
+            "Réduisez le temps assis et bougez toutes les heures.")
 
     # Alimentation irrégulière
     if data["avg_meals"] == 0:
         risk_score += 3
         conditions.append("Aucun repas enregistré")
-        recommendations.append("Ne sautez pas les repas, essayez de manger 3 fois par jour.")
+        recommendations.append(
+            "Ne sautez pas les repas, essayez de manger 3 fois par jour.")
 
     elif data["avg_meals"] == 1:
         risk_score += 2
         conditions.append("Alimentation insuffisante")
-        recommendations.append("Augmentez votre apport alimentaire pour maintenir votre énergie.")
+        recommendations.append(
+            "Augmentez votre apport alimentaire pour maintenir votre énergie.")
 
     # --- Détermination du niveau de risque ---
     if risk_score >= 7:
