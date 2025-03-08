@@ -10,13 +10,6 @@ import pandas as pd
 import json
 import requests
 
-<<<<<<< HEAD
-def generateContent(input_text):
-    client = genai.Client(api_key="YOUR_API_KEY")
-    response = client.models.generate_content(
-        model="gemini-2.0-flash", contents=[{"text": input_text}])
-    return response.text
-=======
 # -----------------------------
 # Configuration de la base de données
 # -----------------------------
@@ -289,4 +282,3 @@ def main():
 
 if __name__ == '__main__':
     main()
->>>>>>> 7d9a9a2d8a9f3a27d7899c63fae8a06acf4c9fff
