@@ -1,139 +1,17 @@
+from ai_manager import gemini_predict, evaluate_risk
+from database import session, User, DataEntry, Follow
+from connection import login, register, hash_password
+
 import streamlit as st
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey, Text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
 import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 import json
-import requests
-import bcrypt
-# AJOUTER PAR GEORGES POUR LE GEMINI
-from google import genai
 
-
-def hash_password(password: str) -> str:
-    """Hashes a password using bcrypt."""
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(password.encode(), salt)
-    return hashed_password.decode()
-# def generateContent(input_text):
-#     client = genai.Client(api_key="YOUR_API_KEY")
-#     response = client.models.generate_content(
-#         model="gemini-2.0-flash", contents=[{"text": input_text}])
-#     return response.text
-
-
-# -----------------------------
-# Configuration de la base de données
-# -----------------------------
-engine = create_engine("sqlite:///health_app.db",
-                       connect_args={"check_same_thread": False})
-Session = sessionmaker(bind=engine)
-session = Session()
-Base = declarative_base()
-
-# -----------------------------
-# Définition des modèles de données
-# -----------------------------
-
-
-class User(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
-    username = Column(String, unique=True)
-    # Pour production, utilisez un hash de mot de passe
-    password = Column(String)
-    email = Column(String, unique=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    # Relation avec les entrées de données
-    data_entries = relationship("DataEntry", back_populates="user")
-    # Relations pour le suivi social
-    following = relationship(
-        "Follow", back_populates="follower", foreign_keys='Follow.follower_id')
-    followers = relationship(
-        "Follow", back_populates="followed", foreign_keys='Follow.followed_id')
-
-
-class DataEntry(Base):
-    __tablename__ = 'data_entries'
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    date = Column(DateTime, default=datetime.datetime.utcnow)
-    pushups = Column(Integer)
-    meals_count = Column(Integer)
-    meals_details = Column(Text)  # Stocké au format JSON
-    water_intake = Column(Float)   # en litres
-    sleep_hours = Column(Float)
-    time_spent = Column(Float)     # Temps passé sur activités (en minutes)
-    user = relationship("User", back_populates="data_entries")
-
-
-class Follow(Base):
-    __tablename__ = 'follows'
-    id = Column(Integer, primary_key=True)
-    follower_id = Column(Integer, ForeignKey('users.id'))
-    followed_id = Column(Integer, ForeignKey('users.id'))
-    follower = relationship(
-        "User", back_populates="following", foreign_keys=[follower_id])
-    followed = relationship(
-        "User", back_populates="followers", foreign_keys=[followed_id])
-
-
-# Création des tables si elles n'existent pas déjà
-Base.metadata.create_all(engine)
-
-# -----------------------------
-# Fonction de simulation d'appel à l'API Gemini
-# -----------------------------
-
-
-def gemini_predict(data):
-    """
-    Cette fonction simule un appel à l'API Gemini.
-    Pour une intégration réelle, utilisez requests pour envoyer vos données à l'API.
-    """
-    # Exemple d'appel réel :
-    # response = requests.post("https://api.gemini.com/predict", json=data, headers={"Authorization": "Bearer VOTRE_CLE"})
-    # return response.json()
-
-    # Ici, nous retournons une réponse fictive :
-    # client = genai.Client(api_key="YOUR_API_KEY")
-    # response = client.models.generate_content(
-    #     model="gemini-2.0-flash", contents=[{"text": input_text}])
-    # return response.text
-
-    prediction = {
-        "risk_level": "Faible",
-        "potential_conditions": ["Aucune anomalie détectée"],
-        "recommendations": "Continuez à suivre un régime équilibré et à pratiquer une activité physique régulière."
-    }
-    return prediction
-
-# -----------------------------
-# Fonctions d'authentification
-# -----------------------------
-
-
-def login(username, password):
-    user = session.query(User).filter_by(
-        username=username, password=password).first()
-    return user
-
-
-def register(username, password, email):
-    if session.query(User).filter_by(username=username).first():
-        return None, "Le nom d'utilisateur existe déjà."
-    new_user = User(username=username, password=password, email=email)
-    session.add(new_user)
-    session.commit()
-    return new_user, "Utilisateur enregistré avec succès."
 
 # -----------------------------
 # Application Streamlit
 # -----------------------------
-
-
 def main():
     st.title("Application HealthPro")
     menu = ["Accueil", "Connexion", "Inscription", "Collecte des Données",
