@@ -1,7 +1,5 @@
 from ai_manager import gemini_predict, evaluate_risk  # Assurez-vous que ces fonctions sont définies
 from database import User, DataEntry, Follow, register, login
-# from connection import login, register
-
 import streamlit as st
 import datetime
 import matplotlib.pyplot as plt
