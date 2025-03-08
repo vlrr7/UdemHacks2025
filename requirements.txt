@@ -2,3 +2,4 @@ google-genai
 sqlalchemy
 matplotlib
 pandas
+bcrypt

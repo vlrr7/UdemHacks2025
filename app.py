@@ -7,15 +7,21 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import json
 import requests
+import bcrypt
 # AJOUTER PAR GEORGES POUR LE GEMINI
 from google import genai
-    
 
-def generateContent(input_text):
-    client = genai.Client(api_key="YOUR_API_KEY")
-    response = client.models.generate_content(
-        model="gemini-2.0-flash", contents=[{"text": input_text}])
-    return response.text
+
+def hash_password(password: str) -> str:
+    """Hashes a password using bcrypt."""
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password.encode(), salt)
+    return hashed_password.decode()
+# def generateContent(input_text):
+#     client = genai.Client(api_key="YOUR_API_KEY")
+#     response = client.models.generate_content(
+#         model="gemini-2.0-flash", contents=[{"text": input_text}])
+#     return response.text
 
 
 # -----------------------------
@@ -90,7 +96,7 @@ def gemini_predict(data):
     # Exemple d'appel réel :
     # response = requests.post("https://api.gemini.com/predict", json=data, headers={"Authorization": "Bearer VOTRE_CLE"})
     # return response.json()
-    
+
     # Ici, nous retournons une réponse fictive :
     # client = genai.Client(api_key="YOUR_API_KEY")
     # response = client.models.generate_content(
@@ -143,7 +149,8 @@ def main():
     elif choice == "Connexion":
         st.header("Connexion")
         username = st.text_input("Nom d'utilisateur")
-        password = st.text_input("Mot de passe", type="password")
+        password = hash_password(st.text_input(
+            "Mot de passe", type="password"))
         if st.button("Se connecter"):
             user = login(username, password)
             if user:
@@ -157,8 +164,9 @@ def main():
         st.header("Inscription")
         username = st.text_input("Nom d'utilisateur", key="reg_username")
         email = st.text_input("Email", key="reg_email")
-        password = st.text_input(
-            "Mot de passe", type="password", key="reg_password")
+        password = hash_password(st.text_input(
+            "Mot de passe", type="password", key="reg_password"))
+
         if st.button("S'inscrire"):
             user, msg = register(username, password, email)
             if user:
