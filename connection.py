@@ -1,6 +1,6 @@
 import bcrypt
+from sqlalchemy.exc import IntegrityError
 from database import session, User
-
 
 def hash_password(password: str) -> str:
     """Hashes a password using bcrypt."""
@@ -23,12 +23,22 @@ def login(username: str, password: str):
 
 def register(username: str, password: str, email: str):
     """Registers a new user with a hashed password."""
+
+    # Check if the username or email already exists
     if session.query(User).filter_by(username=username).first():
         return None, "Le nom d'utilisateur existe déjà."
+    if session.query(User).filter_by(email=email).first():
+        return None, "L'email est déjà utilisé."
 
-    hashed_password = hash_password(password)  # Hash password before storing
-    new_user = User(username=username, password=hashed_password, email=email)
-    session.add(new_user)
-    session.commit()
+    try:
+        # Hash password before storing
+        hashed_password = hash_password(password)
+        new_user = User(username=username,
+                        password=hashed_password, email=email)
+        session.add(new_user)
+        session.commit()
+        return new_user, "Utilisateur enregistré avec succès."
 
-    return new_user, "Utilisateur enregistré avec succès."
+    except IntegrityError as e:
+        session.rollback()  # Rollback the transaction if an error occurs
+        return None, "Erreur d'inscription: email ou nom d'utilisateur déjà utilisé."

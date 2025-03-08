@@ -133,6 +133,14 @@ def main():
         else:
             user_id = st.session_state['user_id']
 
+            # Style CSS pour les boîtes
+            st.markdown("""
+                <style>
+                    .stat-box { border: 1px solid #e0e0e0; padding: 20px; border-radius: 10px; margin: 10px 0; }
+                    .comparison-box { border: 1px solid #d0d0d0; padding: 20px; border-radius: 10px; }
+                </style>
+            """, unsafe_allow_html=True)
+
             # ---- Suivre un utilisateur ----
             st.subheader("Suivre un utilisateur")
             follow_username = st.text_input("Nom d'utilisateur à suivre")
@@ -153,7 +161,6 @@ def main():
 
             # ---- Liste des amis ----
             st.subheader("Vos amis")
-            # Force refresh des données après une action
             follows = session.query(Follow).filter_by(follower_id=user_id).all()
             followed_ids = [follow.followed_id for follow in follows]
             
@@ -163,15 +170,15 @@ def main():
                 followed_users = session.query(User).filter(User.id.in_(followed_ids)).all()
                 selected_user = None
 
-                # Affichage dynamique avec colonnes
+                # Affichage des amis
                 cols = st.columns(len(followed_users))
                 for i, friend in enumerate(followed_users):
                     with cols[i]:
-                        # Utilisation de st.session_state pour conserver la sélection
                         if st.button(friend.username, key=f"friend_{friend.id}"):
                             st.session_state.selected_user_id = friend.id
+                            st.session_state.comparison_mode = False  # Reset comparaison
 
-                # Récupération de l'utilisateur sélectionné
+                # Gestion de la sélection
                 if 'selected_user_id' in st.session_state:
                     selected_user = session.query(User).get(st.session_state.selected_user_id)
 
@@ -184,9 +191,8 @@ def main():
                             follower_id=user_id, followed_id=selected_user.id).delete()
                         session.commit()
                         st.success(f"Vous ne suivez plus {selected_user.username}.")
-                        # Suppression de la sélection et rechargement
                         del st.session_state.selected_user_id
-                        st.rerun()  # Utilisation de st.rerun() à la place de experimental_rerun()
+                        st.rerun()
 
                     # ---- Affichage des données ----
                     entries = session.query(DataEntry).filter_by(user_id=selected_user.id).order_by(DataEntry.date.desc()).all()
@@ -194,16 +200,20 @@ def main():
                     if not entries:
                         st.warning("Aucune donnée disponible pour cet utilisateur.")
                     else:
+                        # Affichage des données quotidiennes
                         available_dates = [entry.date for entry in entries]
                         selected_date = st.selectbox("Sélectionnez une date", available_dates)
                         entry = next(e for e in entries if e.date == selected_date)
                         
-                        st.write(f"📅 **Date:** {entry.date}")
-                        st.write(f"💪 **Pompes:** {entry.pushups}")
-                        st.write(f"🍽 **Repas:** {entry.meals_count}")
-                        st.write(f"💧 **Eau (L):** {entry.water_intake}")
-                        st.write(f"😴 **Sommeil (h):** {entry.sleep_hours}")
-                        st.write(f"📱 **Temps passé (min):** {entry.time_spent}")
+                        with st.container():
+                            st.markdown('<div class="stat-box">', unsafe_allow_html=True)
+                            st.write(f"📅 **Date:** {entry.date}")
+                            st.write(f"💪 **Pompes:** {entry.pushups}")
+                            st.write(f"🍽 **Repas:** {entry.meals_count}")
+                            st.write(f"💧 **Eau (L):** {entry.water_intake}")
+                            st.write(f"😴 **Sommeil (h):** {entry.sleep_hours}")
+                            st.write(f"📱 **Temps passé (min):** {entry.time_spent}")
+                            st.markdown('</div>', unsafe_allow_html=True)
 
                         # ---- Statistiques globales ----
                         if st.button("Voir les statistiques globales de cet utilisateur"):
@@ -213,35 +223,82 @@ def main():
                             avg_sleep = sum(e.sleep_hours for e in entries) / len(entries)
                             avg_time = sum(e.time_spent for e in entries) / len(entries)
 
-                            st.write("📊 **Statistiques globales**")
-                            st.write(f"💪 **Pompes moyennes:** {avg_pushups:.1f}")
-                            st.write(f"🍽 **Repas moyens:** {avg_meals:.1f}")
-                            st.write(f"💧 **Eau moyenne (L):** {avg_water:.1f}")
-                            st.write(f"😴 **Sommeil moyen (h):** {avg_sleep:.1f}")
-                            st.write(f"📱 **Temps passé moyen (min):** {avg_time:.1f}")
+                            # Stockage des données pour la comparaison
+                            st.session_state.friend_stats = {
+                                "Pompes": avg_pushups,
+                                "Repas": avg_meals,
+                                "Eau (L)": avg_water,
+                                "Sommeil (h)": avg_sleep,
+                                "Temps (min)": avg_time
+                            }
+                            st.session_state.show_global = True
 
-                            # ---- Comparaison ----
-                            my_entries = session.query(DataEntry).filter_by(user_id=user_id).all()
-                            if my_entries and st.button("Comparer mes statistiques avec cet utilisateur"):
-                                my_avg_pushups = sum(e.pushups for e in my_entries)/len(my_entries)
-                                my_avg_meals = sum(e.meals_count for e in my_entries)/len(my_entries)
-                                my_avg_water = sum(e.water_intake for e in my_entries)/len(my_entries)
-                                my_avg_sleep = sum(e.sleep_hours for e in my_entries)/len(my_entries)
-                                my_avg_time = sum(e.time_spent for e in my_entries)/len(my_entries)
+                        # Affichage des stats globales
+                        if 'show_global' in st.session_state and st.session_state.show_global:
+                            with st.container():
+                                st.markdown('<div class="stat-box">', unsafe_allow_html=True)
+                                st.write("📊 **Statistiques globales**")
+                                st.write(f"💪 **Pompes moyennes:** {st.session_state.friend_stats['Pompes']:.1f}")
+                                st.write(f"🍽 **Repas moyens:** {st.session_state.friend_stats['Repas']:.1f}")
+                                st.write(f"💧 **Eau moyenne (L):** {st.session_state.friend_stats['Eau (L)']:.1f}")
+                                st.write(f"😴 **Sommeil moyen (h):** {st.session_state.friend_stats['Sommeil (h)']:.1f}")
+                                st.write(f"📱 **Temps passé moyen (min):** {st.session_state.friend_stats['Temps (min)']:.1f}")
+                                st.markdown('</div>', unsafe_allow_html=True)
 
-                                df_comparison = pd.DataFrame({
-                                    "Statistique": ["Pompes", "Repas", "Eau (L)", "Sommeil (h)", "Temps (min)"],
-                                    "Moi": [my_avg_pushups, my_avg_meals, my_avg_water, my_avg_sleep, my_avg_time],
-                                    selected_user.username: [avg_pushups, avg_meals, avg_water, avg_sleep, avg_time]
-                                })
+                                # ---- Comparaison ----
+                                if st.button("Comparer avec mes statistiques"):
+                                    my_entries = session.query(DataEntry).filter_by(user_id=user_id).all()
+                                    if my_entries:
+                                        my_avg_pushups = sum(e.pushups for e in my_entries)/len(my_entries)
+                                        my_avg_meals = sum(e.meals_count for e in my_entries)/len(my_entries)
+                                        my_avg_water = sum(e.water_intake for e in my_entries)/len(my_entries)
+                                        my_avg_sleep = sum(e.sleep_hours for e in my_entries)/len(my_entries)
+                                        my_avg_time = sum(e.time_spent for e in my_entries)/len(my_entries)
 
-                                st.subheader("📊 Comparaison des statistiques")
-                                st.dataframe(df_comparison)
+                                        # Stockage des données de comparaison
+                                        st.session_state.comparison = {
+                                            "user": {
+                                                "Pompes": my_avg_pushups,
+                                                "Repas": my_avg_meals,
+                                                "Eau (L)": my_avg_water,
+                                                "Sommeil (h)": my_avg_sleep,
+                                                "Temps (min)": my_avg_time
+                                            },
+                                            "friend": st.session_state.friend_stats
+                                        }
+                                        st.session_state.comparison_mode = True
+                                        st.rerun()
 
-                                fig, ax = plt.subplots(figsize=(6, 4))
-                                df_comparison.set_index("Statistique").plot(kind="bar", ax=ax)
-                                ax.set_title(f"Comparaison: Moi vs {selected_user.username}")
-                                st.pyplot(fig)
+                        # Mode comparaison
+                        if 'comparison_mode' in st.session_state and st.session_state.comparison_mode:
+                            col1, col2 = st.columns(2)
+                            
+                            with col1:
+                                with st.container():
+                                    st.markdown('<div class="comparison-box">', unsafe_allow_html=True)
+                                    st.subheader("Mes statistiques")
+                                    st.write(f"💪 Pompes: {st.session_state.comparison['user']['Pompes']:.1f}")
+                                    st.write(f"🍽 Repas: {st.session_state.comparison['user']['Repas']:.1f}")
+                                    st.write(f"💧 Eau: {st.session_state.comparison['user']['Eau (L)']:.1f}")
+                                    st.write(f"😴 Sommeil: {st.session_state.comparison['user']['Sommeil (h)']:.1f}")
+                                    st.write(f"📱 Temps: {st.session_state.comparison['user']['Temps (min)']:.1f}")
+                                    st.markdown('</div>', unsafe_allow_html=True)
+
+                            with col2:
+                                with st.container():
+                                    st.markdown('<div class="comparison-box">', unsafe_allow_html=True)
+                                    st.subheader(f"Statistiques de {selected_user.username}")
+                                    st.write(f"💪 Pompes: {st.session_state.comparison['friend']['Pompes']:.1f}")
+                                    st.write(f"🍽 Repas: {st.session_state.comparison['friend']['Repas']:.1f}")
+                                    st.write(f"💧 Eau: {st.session_state.comparison['friend']['Eau (L)']:.1f}")
+                                    st.write(f"😴 Sommeil: {st.session_state.comparison['friend']['Sommeil (h)']:.1f}")
+                                    st.write(f"📱 Temps: {st.session_state.comparison['friend']['Temps (min)']:.1f}")
+                                    st.markdown('</div>', unsafe_allow_html=True)
+
+                            # Option pour quitter le mode comparaison
+                            if st.button("Retour aux statistiques simples"):
+                                del st.session_state.comparison_mode
+                                st.rerun()
 
     # ----- Prédictions Gemini -----
     elif choice == "Gemini Predictions":
