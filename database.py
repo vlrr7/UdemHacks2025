@@ -58,6 +58,10 @@ class User:
     @staticmethod
     def find_by_email(email):
         return users_collection.find_one({"email": email})
+    
+    @staticmethod
+    def find_by_username(username):
+        return users_collection.find_one({"username": username})
 
 # Modified DataEntry Class
 class DataEntry:
