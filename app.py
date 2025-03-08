@@ -10,15 +10,23 @@ def main():
     st.title("Application HealthPro")
     menu = ["Accueil", "Connexion", "Inscription", "Collecte des Données",
             "Analyse", "Social", "Gemini Predictions", "Paramètres"]
-    choice = st.sidebar.selectbox("Menu", menu)
+    # Configuration du menu latéral toujours ouvert
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = "Accueil"
+
+    with st.sidebar:
+        st.markdown("### Navigation")
+        for page in menu:
+            if st.button(page, key=f"menu_{page}"):
+                st.session_state.current_page = page
 
     # ----- Page d'accueil -----
-    if choice == "Accueil":
+    if st.session_state.current_page == "Accueil":
         st.header("Bienvenue sur l'application HealthPro")
         st.write("Veuillez vous connecter ou vous inscrire pour commencer.")
 
     # ----- Page de connexion -----
-    elif choice == "Connexion":
+    elif st.session_state.current_page == "Connexion":
         st.header("Connexion")
         username = st.text_input("Nom d'utilisateur")
         password = st.text_input("Mot de passe", type="password")
@@ -30,7 +38,7 @@ def main():
             else:
                 st.error("Identifiants incorrects")
 
-    elif choice == "Inscription":
+    elif st.session_state.current_page == "Inscription":
         st.header("Inscription")
         username = st.text_input("Nom d'utilisateur", key="reg_username")
         email = st.text_input("Email", key="reg_email")
@@ -45,7 +53,7 @@ def main():
                 st.error(msg)
 
     # ----- Collecte des données -----
-    elif choice == "Collecte des Données":
+    elif st.session_state.current_page== "Collecte des Données":
         st.header("Saisie de vos données quotidiennes")
         if 'user_id' not in st.session_state:
             st.error("Veuillez vous connecter pour saisir vos données.")
@@ -80,7 +88,7 @@ def main():
                 st.success("Données enregistrées avec succès!")
 
     # ----- Analyse des données -----
-    elif choice == "Analyse":
+    elif st.session_state.current_page == "Analyse":
         st.header("Analyse de vos données")
         if 'user_id' not in st.session_state:
             st.error("Veuillez vous connecter pour accéder à l'analyse.")
@@ -109,7 +117,7 @@ def main():
                 st.pyplot(fig)
 
     # ----- Interface sociale -----
-    elif choice == "Social":
+    elif st.session_state.current_page == "Social":
         st.header("Réseau Social")
         if 'user_id' not in st.session_state:
             st.error("Veuillez vous connecter pour accéder aux fonctionnalités sociales.")
@@ -150,7 +158,7 @@ def main():
                         Follow.delete(user_id, str(selected_user._id))
                         st.success(f"Vous ne suivez plus {selected_user.username}.")
                         del st.session_state.selected_user_id
-                        st.experimental_rerun()
+    
                     entries = DataEntry.find_by_user_id(str(selected_user._id))
                     if not entries:
                         st.warning("Aucune donnée disponible pour cet utilisateur.")
@@ -213,7 +221,7 @@ def main():
                                         "friend": st.session_state.friend_global
                                     }
                                     st.session_state.comparison_mode = True
-                                    st.experimental_rerun()
+                
                         if 'comparison_mode' in st.session_state and st.session_state.comparison_mode:
                             col1, col2 = st.columns(2)
                             with col1:
@@ -240,10 +248,10 @@ def main():
                                 st.markdown("</div>", unsafe_allow_html=True)
                             if st.button("Retour aux statistiques simples"):
                                 del st.session_state.comparison_mode
-                                st.experimental_rerun()
+            
 
     # ----- Prédictions Gemini -----
-    elif choice == "Gemini Predictions":
+    elif st.session_state.current_page == "Gemini Predictions":
         st.header("Prédictions et Recommandations (Gemini)")
         if 'user_id' not in st.session_state:
             st.error("Veuillez vous connecter pour accéder aux prédictions.")
@@ -273,7 +281,7 @@ def main():
                 st.write(f"**Recommandations :** {prediction['recommendations']}")
 
     # ----- Paramètres utilisateur -----
-    elif choice == "Paramètres":
+    elif st.session_state.current_page == "Paramètres":
         st.header("Paramètres")
         if 'user_id' not in st.session_state:
             st.error("Veuillez vous connecter pour accéder aux paramètres.")
