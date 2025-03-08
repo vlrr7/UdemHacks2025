@@ -22,6 +22,7 @@ def main():
     if choice == "Accueil":
         st.header("Bienvenue sur l'application HealthPro")
         st.write("Veuillez vous connecter ou vous inscrire pour commencer.")
+        st.write(st.secrets["GEMINI_API_KEY"])
 
     # ----- Page de connexion -----
     elif choice == "Connexion":
