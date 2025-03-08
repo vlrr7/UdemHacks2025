@@ -2,12 +2,12 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 import datetime
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///health_app.db")
 
 # -----------------------------
 # Configuration de la base de données
 # -----------------------------
-engine = create_engine("sqlite:///health_app.db",
-                       connect_args={"check_same_thread": False})
+engine = create_engine(DATABASE_URL, echo=False)
 Session = sessionmaker(bind=engine)
 session = Session()
 Base = declarative_base()
