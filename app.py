@@ -120,12 +120,14 @@ def main():
             st.error("Veuillez vous connecter pour accéder aux fonctionnalités sociales.")
         else:
             user_id = st.session_state['user_id']
+            if 'selected_user_id' not in st.session_state:
+                st.session_state.selected_user_id = None
             st.subheader("Suivre un utilisateur")
             follow_username = st.text_input("Nom d'utilisateur à suivre")
             if st.button("Suivre"):
                 user_to_follow = User.find_by_username(follow_username)
-                if user_id == user_to_follow["_id"]:
-                    st.info("Vous ne pouvez pas vous suivre vous-même.")  
+                if str(user_id) == str(user_to_follow["_id"]):
+                    st.info("Vous ne pouvez pas vous suivre vous-même.")
                 elif user_to_follow:
                     if not Follow.find_one(user_id, str(user_to_follow["_id"])):
                         new_follow = Follow(follower_id=user_id, followed_id=str(user_to_follow["_id"]))
@@ -303,7 +305,7 @@ def main():
                 st.write("Données agrégées pour la prédiction :", user_data)
                 prediction = gemini_predict(user_data)
                 st.subheader("Résultat de la prédiction")
-                st.write(f"**Niveau de risque :** {prediction}")
+                st.write(f"{prediction}")
 
     # ----- Paramètres utilisateur -----
     elif st.session_state.current_page == "Paramètres":

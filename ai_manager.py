@@ -18,10 +18,10 @@ def gemini_predict(data):
     response = client.models.generate_content(
         model="gemini-2.0-flash", contents= f"""{str(data)}. These are the user's data for an application that tracks
         what a routine and health conditions and is able to predict his risk level of found conditions,
-        i want you to only indicate the following in french,
-        niveau de risque: (Bas, Moyen, Haut),
+        i want you to only indicate the following in french and say absolutely nothing before and after the answer,
+        niveau de risque: (Faible, Modéré, Élevé),
         Conditions potentiels: (Type of possible sicknesses, conditions)
-        Recommendations: (What do you recommend the user to do)""")
+        Recommandations: (What do you recommend the user to do)""")
     return response.text
 
     # prediction = {
