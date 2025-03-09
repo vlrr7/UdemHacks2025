@@ -22,14 +22,12 @@ def main():
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "Connexion"
 
-    # Affichage du menu en colonnes
     cols = st.columns(len(menu))
     for i, page in enumerate(menu):
         with cols[i]:
             if st.button(page, key=f"menu_{page}", use_container_width=True):
                 st.session_state.current_page = page
 
-    # Navigation entre pages
     if st.session_state.current_page == "Connexion":
         display_connection_page()
     elif st.session_state.current_page == "Inscription":
