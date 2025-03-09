@@ -85,7 +85,7 @@ class User:
 
 
 # -------------------------------------------------------------------------------
-# 3. CLASSE DATAENTRY (version modifiée)
+# 2. CLASSE DATAENTRY (version modifiée)
 # -------------------------------------------------------------------------------
 class DataEntry:
     def __init__(self, user_id, **kwargs):
@@ -157,7 +157,7 @@ class DataEntry:
         return entries
 
 # -------------------------------------------------------------------------------
-# 4. CLASSE FOLLOW (remplace le modèle SQLAlchemy "Follow")
+# 3. CLASSE FOLLOW (remplace le modèle SQLAlchemy "Follow")
 # -------------------------------------------------------------------------------
 class Follow:
     def __init__(self, follower_id, followed_id, _id=None):
