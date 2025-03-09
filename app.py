@@ -1,4 +1,4 @@
-from ai_manager import gemini_predict, evaluate_risk  # Assurez-vous que ces fonctions sont définies
+from ai_manager import gemini_predict  # Assurez-vous que ces fonctions sont définies
 from database import User, DataEntry, Follow, register, login
 import streamlit as st
 import datetime
@@ -63,6 +63,7 @@ def main():
             age = st.number_input("Âge", min_value=0, step=1)
             height = st.number_input("Taille (cm)", min_value=50, max_value=250, step=1)
             weight = st.number_input("Poids (kg)", min_value=20.0, max_value=200.0, step=0.1)
+            bmi = weight / ((height / 100) ** 2) if height > 0 else 0
 
             # Données quotidiennes
             st.subheader("Données quotidiennes")
@@ -77,22 +78,20 @@ def main():
             amsler = st.text_input("Résultat test visuel (Amsler)", value="Normal")
             hearing = st.text_input("Résultat test auditif", value="Normal")
             if st.button("Enregistrer les données"):
-                
-                try:
-                    # Si vous souhaitez stocker un dictionnaire, ne pas utiliser json.dumps ici
-                    meals_json = json.loads(meals_details) if meals_details else {}
-                except Exception as e:
-                    st.error("Le format des détails des repas n'est pas un JSON valide.")
-                    return
                 new_entry = DataEntry(
                     user_id=user_id,
                     date=date,
-                    pushups=pushups,
-                    meals_count=meals_count,
-                    meals_details=meals_json,
-                    water_intake=water_intake,
-                    sleep_hours=sleep_hours,
-                    time_spent=time_spent
+                    age=age,
+                    height=height,
+                    weight=weight,
+                    bmi=bmi,
+                    water=water,
+                    calories=calories,
+                    sleep=sleep,
+                    activity_time=activity_time,
+                    tug=tug,
+                    amsler=amsler,
+                    hearing=hearing
                 )
                 new_entry.save()
                 st.success("Données enregistrées avec succès!")
@@ -110,21 +109,22 @@ def main():
             else:
                 data = [{
                     "date": entry.date,
-                    "pompes": entry.pushups,
-                    "repas": entry.meals_count,
-                    "eau (L)": entry.water_intake,
-                    "sommeil (h)": entry.sleep_hours,
-                    "temps (min)": entry.time_spent
+                    "Âge": entry.age,
+                    "Taille (cm)": entry.height,
+                    "Poids (kg)": entry.weight,
+                    "IMC": entry.bmi,
+                    "Eau (L)": entry.water,
+                    "Calories": entry.calories,
+                    "Sommeil (h)": entry.sleep,
+                    "Activité (min)": entry.activity_time,
+                    "TUG (sec)": entry.tug,
+                    "Amsler": entry.amsler,
+                    "Audition": entry.hearing
                 } for entry in entries]
                 df = pd.DataFrame(data)
                 st.dataframe(df)
-                fig, ax = plt.subplots()
-                ax.plot(df["date"], df["pompes"], marker="o", label="Pompes")
-                ax.set_title("Évolution du nombre de pompes")
-                ax.set_xlabel("Date")
-                ax.set_ylabel("Nombre de pompes")
-                ax.legend()
-                st.pyplot(fig)
+                # You can add plots here if needed, but the data structure has changed significantly
+                # Example: st.line_chart(df[["date", "Sommeil (h)"]].set_index("date"))
 
     # ----- Interface sociale -----
     elif st.session_state.current_page == "Social":
@@ -212,53 +212,79 @@ def main():
                             st.markdown(f"""
                                 <div class="stat-box">
                                     <h4>📅 Données du {entry.date}</h4>
-                                    <p>💪 Pompes : <strong>{entry.pushups}</strong></p>
-                                    <p>🍽 Repas : <strong>{entry.meals_count}</strong></p>
-                                    <p>💧 Eau (L) : <strong>{entry.water_intake}</strong></p>
-                                    <p>😴 Sommeil (h) : <strong>{entry.sleep_hours}</strong></p>
-                                    <p>📱 Temps (min) : <strong>{entry.time_spent}</strong></p>
+                                    <p>Âge : <strong>{entry.age}</strong></p>
+                                    <p>Taille (cm) : <strong>{entry.height}</strong></p>
+                                    <p>Poids (kg) : <strong>{entry.weight}</strong></p>
+                                    <p>IMC : <strong>{entry.bmi:.2f}</strong></p>
+                                    <p>💧 Eau (L) : <strong>{entry.water}</strong></p>
+                                    <p>Calories : <strong>{entry.calories}</strong></p>
+                                    <p>😴 Sommeil (h) : <strong>{entry.sleep}</strong></p>
+                                    <p>Activité (min) : <strong>{entry.activity_time}</strong></p>
+                                    <p>TUG (sec) : <strong>{entry.tug}</strong></p>
+                                    <p>Amsler : <strong>{entry.amsler}</strong></p>
+                                    <p>Audition : <strong>{entry.hearing}</strong></p>
                                 </div>
                             """, unsafe_allow_html=True)
                         if st.button("Voir les statistiques globales"):
-                            avg_pushups = sum(e.pushups for e in entries) / len(entries)
-                            avg_meals = sum(e.meals_count for e in entries) / len(entries)
-                            avg_water = sum(e.water_intake for e in entries) / len(entries)
-                            avg_sleep = sum(e.sleep_hours for e in entries) / len(entries)
-                            avg_time = sum(e.time_spent for e in entries) / len(entries)
+                            avg_age = sum(e.age for e in entries) / len(entries) if entries else 0
+                            avg_height = sum(e.height for e in entries) / len(entries) if entries else 0
+                            avg_weight = sum(e.weight for e in entries) / len(entries) if entries else 0
+                            avg_bmi = sum(e.bmi for e in entries) / len(entries) if entries else 0
+                            avg_water = sum(e.water for e in entries) / len(entries) if entries else 0
+                            avg_calories = sum(e.calories for e in entries) / len(entries) if entries else 0
+                            avg_sleep = sum(e.sleep for e in entries) / len(entries) if entries else 0
+                            avg_activity_time = sum(e.activity_time for e in entries) / len(entries) if entries else 0
+                            avg_tug = sum(e.tug for e in entries) / len(entries) if entries else 0
                             st.session_state.friend_global = {
-                                "Pompes": avg_pushups,
-                                "Repas": avg_meals,
+                                "Âge": avg_age,
+                                "Taille": avg_height,
+                                "Poids": avg_weight,
+                                "IMC": avg_bmi,
                                 "Eau": avg_water,
+                                "Calories": avg_calories,
                                 "Sommeil": avg_sleep,
-                                "Temps": avg_time
+                                "Activité": avg_activity_time,
+                                "TUG": avg_tug
                             }
                             st.session_state.show_global = True
                         if 'show_global' in st.session_state and st.session_state.show_global:
                             st.markdown(f"""
                                 <div class="stat-box">
                                     <h4>📊 Statistiques globales de {selected_user["username"]}</h4>
-                                    <p>💪 Pompes moyennes : <strong>{st.session_state.friend_global['Pompes']:.1f}</strong></p>
-                                    <p>🍽 Repas moyens : <strong>{st.session_state.friend_global['Repas']:.1f}</strong></p>
+                                    <p>Âge moyen : <strong>{st.session_state.friend_global['Âge']:.1f}</strong></p>
+                                    <p>Taille moyenne : <strong>{st.session_state.friend_global['Taille']:.1f} cm</strong></p>
+                                    <p>Poids moyen : <strong>{st.session_state.friend_global['Poids']:.1f} kg</strong></p>
+                                    <p>IMC moyen : <strong>{st.session_state.friend_global['IMC']:.1f}</strong></p>
                                     <p>💧 Eau moyenne : <strong>{st.session_state.friend_global['Eau']:.1f} L</strong></p>
+                                    <p>Calories moyennes : <strong>{st.session_state.friend_global['Calories']:.1f}</strong></p>
                                     <p>😴 Sommeil moyen : <strong>{st.session_state.friend_global['Sommeil']:.1f} h</strong></p>
-                                    <p>📱 Temps moyen : <strong>{st.session_state.friend_global['Temps']:.1f} min</strong></p>
+                                    <p>Activité moyenne : <strong>{st.session_state.friend_global['Activité']:.1f} min</strong></p>
+                                    <p>TUG moyen : <strong>{st.session_state.friend_global['TUG']:.1f} sec</strong></p>
                                 </div>
                             """, unsafe_allow_html=True)
                             if st.button("Comparer avec mes statistiques"):
                                 my_entries = DataEntry.find_by_user_id(user_id)
                                 if my_entries:
-                                    my_avg_pushups = sum(e.pushups for e in my_entries) / len(my_entries)
-                                    my_avg_meals = sum(e.meals_count for e in my_entries) / len(my_entries)
-                                    my_avg_water = sum(e.water_intake for e in my_entries) / len(my_entries)
-                                    my_avg_sleep = sum(e.sleep_hours for e in my_entries) / len(my_entries)
-                                    my_avg_time = sum(e.time_spent for e in my_entries) / len(my_entries)
+                                    my_avg_age = sum(e.age for e in my_entries) / len(my_entries) if my_entries else 0
+                                    my_avg_height = sum(e.height for e in my_entries) / len(my_entries) if my_entries else 0
+                                    my_avg_weight = sum(e.weight for e in my_entries) / len(my_entries) if my_entries else 0
+                                    my_avg_bmi = sum(e.bmi for e in my_entries) / len(my_entries) if my_entries else 0
+                                    my_avg_water = sum(e.water for e in my_entries) / len(my_entries) if my_entries else 0
+                                    my_avg_calories = sum(e.calories for e in my_entries) / len(my_entries) if my_entries else 0
+                                    my_avg_sleep = sum(e.sleep for e in my_entries) / len(my_entries) if my_entries else 0
+                                    my_avg_activity_time = sum(e.activity_time for e in my_entries) / len(my_entries) if my_entries else 0
+                                    my_avg_tug = sum(e.tug for e in my_entries) / len(my_entries) if my_entries else 0
                                     st.session_state.comparison = {
                                         "user": {
-                                            "Pompes": my_avg_pushups,
-                                            "Repas": my_avg_meals,
+                                            "Âge": my_avg_age,
+                                            "Taille": my_avg_height,
+                                            "Poids": my_avg_weight,
+                                            "IMC": my_avg_bmi,
                                             "Eau": my_avg_water,
+                                            "Calories": my_avg_calories,
                                             "Sommeil": my_avg_sleep,
-                                            "Temps": my_avg_time
+                                            "Activité": my_avg_activity_time,
+                                            "TUG": my_avg_tug
                                         },
                                         "friend": st.session_state.friend_global
                                     }
@@ -271,26 +297,33 @@ def main():
                                     <div class="comparison-box">
                                         <h4>Vos statistiques</h4>
                                 """, unsafe_allow_html=True)
-                                st.write(f"💪 Pompes : {st.session_state.comparison['user']['Pompes']:.1f}")
-                                st.write(f"🍽 Repas : {st.session_state.comparison['user']['Repas']:.1f}")
+                                st.write(f"Âge : {st.session_state.comparison['user']['Âge']:.1f}")
+                                st.write(f"Taille : {st.session_state.comparison['user']['Taille']:.1f} cm")
+                                st.write(f"Poids : {st.session_state.comparison['user']['Poids']:.1f} kg")
+                                st.write(f"IMC : {st.session_state.comparison['user']['IMC']:.1f}")
                                 st.write(f"💧 Eau : {st.session_state.comparison['user']['Eau']:.1f} L")
+                                st.write(f"Calories : {st.session_state.comparison['user']['Calories']:.1f}")
                                 st.write(f"😴 Sommeil : {st.session_state.comparison['user']['Sommeil']:.1f} h")
-                                st.write(f"📱 Temps : {st.session_state.comparison['user']['Temps']:.1f} min")
+                                st.write(f"Activité : {st.session_state.comparison['user']['Activité']:.1f} min")
+                                st.write(f"TUG : {st.session_state.comparison['user']['TUG']:.1f} sec")
                                 st.markdown("</div>", unsafe_allow_html=True)
                             with col2:
                                 st.markdown(f"""
                                     <div class="comparison-box">
                                         <h4>Statistiques de {selected_user["username"]}</h4>
                                 """, unsafe_allow_html=True)
-                                st.write(f"💪 Pompes : {st.session_state.comparison['friend']['Pompes']:.1f}")
-                                st.write(f"🍽 Repas : {st.session_state.comparison['friend']['Repas']:.1f}")
+                                st.write(f"Âge : {st.session_state.comparison['friend']['Âge']:.1f}")
+                                st.write(f"Taille : {st.session_state.comparison['friend']['Taille']:.1f} cm")
+                                st.write(f"Poids : {st.session_state.comparison['friend']['Poids']:.1f} kg")
+                                st.write(f"IMC : {st.session_state.comparison['friend']['IMC']:.1f}")
                                 st.write(f"💧 Eau : {st.session_state.comparison['friend']['Eau']:.1f} L")
+                                st.write(f"Calories : {st.session_state.comparison['friend']['Calories']:.1f}")
                                 st.write(f"😴 Sommeil : {st.session_state.comparison['friend']['Sommeil']:.1f} h")
-                                st.write(f"📱 Temps : {st.session_state.comparison['friend']['Temps']:.1f} min")
+                                st.write(f"Activité : {st.session_state.comparison['friend']['Activité']:.1f} min")
+                                st.write(f"TUG : {st.session_state.comparison['friend']['TUG']:.1f} sec")
                                 st.markdown("</div>", unsafe_allow_html=True)
                             if st.button("Retour aux statistiques simples"):
                                 del st.session_state.comparison_mode
-            
 
     # ----- Prédictions Gemini -----
     if st.session_state.current_page == "Gemini Predictions":
@@ -303,17 +336,25 @@ def main():
             if not entries:
                 st.warning("Aucune donnée disponible pour générer une prédiction.")
             else:
-                avg_pushups = sum(e.pushups for e in entries) / len(entries)
-                avg_meals = sum(e.meals_count for e in entries) / len(entries)
-                avg_water = sum(e.water_intake for e in entries) / len(entries)
-                avg_sleep = sum(e.sleep_hours for e in entries) / len(entries)
-                avg_time = sum(e.time_spent for e in entries) / len(entries)
+                avg_age = sum(e.age for e in entries) / len(entries) if entries else 0
+                avg_height = sum(e.height for e in entries) / len(entries) if entries else 0
+                avg_weight = sum(e.weight for e in entries) / len(entries) if entries else 0
+                avg_bmi = sum(e.bmi for e in entries) / len(entries) if entries else 0
+                avg_water = sum(e.water for e in entries) / len(entries) if entries else 0
+                avg_calories = sum(e.calories for e in entries) / len(entries) if entries else 0
+                avg_sleep = sum(e.sleep for e in entries) / len(entries) if entries else 0
+                avg_activity_time = sum(e.activity_time for e in entries) / len(entries) if entries else 0
+                avg_tug = sum(e.tug for e in entries) / len(entries) if entries else 0
                 user_data = {
-                    "avg_pushups": avg_pushups,
-                    "avg_meals": avg_meals,
-                    "avg_water": avg_water,
-                    "avg_sleep": avg_sleep,
-                    "avg_time": avg_time
+                    "age": avg_age,
+                    "height": avg_height,
+                    "weight": avg_weight,
+                    "bmi": avg_bmi,
+                    "water": avg_water,
+                    "calories": avg_calories,
+                    "sleep": avg_sleep,
+                    "activity_time": avg_activity_time,
+                    "tug": avg_tug
                 }
                 st.write("Données agrégées pour la prédiction :", user_data)
                 prediction = gemini_predict(user_data)
@@ -328,6 +369,7 @@ def main():
         else:
             st.write("Ici, vous pouvez gérer vos informations personnelles, modifier votre mot de passe, etc.")
             # À compléter selon les besoins
+
 
 if __name__ == '__main__':
     main()

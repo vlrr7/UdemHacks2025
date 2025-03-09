@@ -67,32 +67,6 @@ class User:
     def find_by_id(user_id):
         return users_collection.find_one({"_id": ObjectId(user_id)})
 
-# Modified DataEntry Class
-class DataEntry:
-    def __init__(self, user_id, **kwargs):
-        # Convert date to datetime if needed
-        date = kwargs.get('date', datetime.datetime.utcnow())
-        if isinstance(date, datetime.date):
-            self.date = datetime.combine(date, datetime.min.time())
-        else:
-            self.date = date or datetime.utcnow()
-
-        self.user_id = ObjectId(user_id) if isinstance(user_id, str) else user_id
-        self.pushups = kwargs.get('pushups', 0)
-        self.meals_count = kwargs.get('meals_count', 0)
-        self.meals_details = kwargs.get('meals_details', {})
-        self.water_intake = kwargs.get('water_intake', 0.0)
-        self.sleep_hours = kwargs.get('sleep_hours', 0.0)
-        self.time_spent = kwargs.get('time_spent', 0.0)
-        self._id = kwargs.get('_id', ObjectId())
-
-    def save(self):
-        data_entries_collection.update_one(
-            {"_id": self._id},
-            {"$set": self.__dict__},
-            upsert=True
-        )
-
 # -------------------------------------------------------------------------------
 # 3. CLASSE DATAENTRY (version modifiée)
 # -------------------------------------------------------------------------------
