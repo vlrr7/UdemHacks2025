@@ -128,8 +128,8 @@ def display_social_page():
                         st.markdown(f"""
                             <div class="stat-box">
                                 <h4>📊 Statistiques globales de {selected_user["username"]}</h4>
-                                <p>Âge moyen : <strong>{st.session_state.friend_global['Âge']:.1f}</strong></p>
-                                <p>Taille moyenne : <strong>{st.session_state.friend_global['Taille']:.1f} cm</strong></p>
+                                <p>Âge : <strong>{st.session_state.friend_global['Âge']:.1f}</strong></p>
+                                <p>Taille : <strong>{st.session_state.friend_global['Taille']:.1f} cm</strong></p>
                                 <p>Poids moyen : <strong>{st.session_state.friend_global['Poids']:.1f} kg</strong></p>
                                 <p>IMC moyen : <strong>{st.session_state.friend_global['IMC']:.1f}</strong></p>
                                 <p>💧 Eau moyenne : <strong>{st.session_state.friend_global['Eau']:.1f} L</strong></p>
@@ -182,16 +182,16 @@ def display_social_page():
                             container.write(f"TUG : {st.session_state.comparison['user']['TUG']:.1f} sec")
 
                         with col2:
-                            container
-                            st.write(f"Âge : {st.session_state.comparison['friend']['Âge']:.1f}")
-                            st.write(f"Taille : {st.session_state.comparison['friend']['Taille']:.1f} cm")
-                            st.write(f"Poids : {st.session_state.comparison['friend']['Poids']:.1f} kg")
-                            st.write(f"IMC : {st.session_state.comparison['friend']['IMC']:.1f}")
-                            st.write(f"💧 Eau : {st.session_state.comparison['friend']['Eau']:.1f} L")
-                            st.write(f"Calories : {st.session_state.comparison['friend']['Calories']:.1f}")
-                            st.write(f"😴 Sommeil : {st.session_state.comparison['friend']['Sommeil']:.1f} h")
-                            st.write(f"Activité : {st.session_state.comparison['friend']['Activité']:.1f} min")
-                            st.write(f"TUG : {st.session_state.comparison['friend']['TUG']:.1f} sec")
+                            container = st.container(border=True)
+                            container.write(f"Âge : {st.session_state.comparison['friend']['Âge']:.1f}")
+                            container.write(f"Taille : {st.session_state.comparison['friend']['Taille']:.1f} cm")
+                            container.write(f"Poids : {st.session_state.comparison['friend']['Poids']:.1f} kg")
+                            container.write(f"IMC : {st.session_state.comparison['friend']['IMC']:.1f}")
+                            container.write(f"💧 Eau : {st.session_state.comparison['friend']['Eau']:.1f} L")
+                            container.write(f"Calories : {st.session_state.comparison['friend']['Calories']:.1f}")
+                            container.write(f"😴 Sommeil : {st.session_state.comparison['friend']['Sommeil']:.1f} h")
+                            container.write(f"Activité : {st.session_state.comparison['friend']['Activité']:.1f} min")
+                            container.write(f"TUG : {st.session_state.comparison['friend']['TUG']:.1f} sec")
                             
                         if st.button("Retour aux statistiques simples"):
                             del st.session_state.comparison_mode
