@@ -131,13 +131,12 @@ def display_map_page():
         st.info(str(geo))
         if geo and geo["coords"]:
             new_position = [geo["coords"]["latitude"], geo["coords"]["longitude"]]
-        else:
-            new_position = [48.8566, 2.3522]
-            st.info("🔍 Recherche du signal GPS...")
+    else:
+        new_position = [48.8566, 2.3522]
+        st.info("🔍 Recherche du signal GPS...")
 
-
-        # Calcule la vitesse réelle si une position précédente existe
-        current_timestamp = datetime.now()
+    # Calcule la vitesse réelle si une position précédente existe
+    current_timestamp = datetime.now()
     if st.session_state.run_data['positions']:
         previous_position = st.session_state.run_data['positions'][-1]
         previous_timestamp = st.session_state.run_data['timestamps'][-1]
@@ -150,12 +149,11 @@ def display_map_page():
     else:
         speed = 0
 
-
     new_data = {
-            'timestamp': datetime.now(),
-            'speed': speed,
-            'heart_rate': np.random.randint(120, 190),
-            'position': new_position
+        'timestamp': current_timestamp,
+        'speed': speed,
+        'heart_rate': np.random.randint(120, 190),
+        'position': new_position
     }
     st.session_state.run_data['timestamps'].append(new_data['timestamp'])
     st.session_state.run_data['speeds'].append(new_data['speed'])
