@@ -10,6 +10,7 @@ def display_parameters_page():
     else:
         user_id = st.session_state['user_id']
         user = User.find_by_id(user_id)  # Retrieve user info from the database
+        print(user)
 
         if not user:
             st.error("Utilisateur introuvable.")
