@@ -73,7 +73,7 @@ def display_data_collection_page():
                 timed_up_and_go_test=tug,
                 amsler=amsler,
                 hearing=hearing
-        )
+            )
         new_entry.save()
         
         st.session_state['age'] = age    # Save to session state

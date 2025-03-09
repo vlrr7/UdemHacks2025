@@ -50,7 +50,6 @@ def main():
     elif st.session_state.current_page == "Map":
         display_map_page()
 
-
     # ----- Prédictions Gemini -----
     elif st.session_state.current_page == "Gemini Predictions":
         display_gemini_overview_page()
