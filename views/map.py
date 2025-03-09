@@ -18,7 +18,7 @@ def calculate_target_heart_rate(age):
     }
 
 def display_map_page():
-    st.title("🏃♂️ Running Tracker")
+    st.title("🏃 Running Tracker")
 
     # Rafraîchissement automatique toutes les 5 secondes pour simuler l'actualisation en temps réel
     st_autorefresh(interval=5000, key="datarefresh")
@@ -102,8 +102,9 @@ def display_map_page():
     if st.session_state.run_start:
         elapsed = time.time() - st.session_state.run_start
         st.session_state.elapsed = elapsed
-        
-        query_params = st.query_params()
+
+        # Utiliser st.experimental_get_query_params() pour récupérer les paramètres d'URL
+        query_params = st.experimental_get_query_params()
         try:
             lat = float(query_params.get('lat', [48.8566])[0])
             lon = float(query_params.get('lon', [2.3522])[0])
