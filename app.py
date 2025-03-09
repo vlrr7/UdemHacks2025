@@ -304,8 +304,6 @@ def main():
                 prediction = gemini_predict(user_data)
                 st.subheader("Résultat de la prédiction")
                 st.write(f"**Niveau de risque :** {prediction}")
-                st.write(f"**Conditions potentielles :** {', '.join(prediction)}")
-                st.write(f"**Recommandations :** {prediction}")
 
     # ----- Paramètres utilisateur -----
     elif st.session_state.current_page == "Paramètres":
