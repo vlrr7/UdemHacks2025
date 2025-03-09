@@ -1,17 +1,25 @@
 import streamlit as st
 from database import DataEntry
 import pandas as pd
+import matplotlib.pyplot as plt
+
+# Configuration initiale de Matplotlib
+plt.rcParams.update({'font.size': 8})
+plt.style.use('ggplot')
 
 def display_analysis_page():
     st.title("HealthPro")
     st.header("Analyse de vos données")
+
     if 'user_id' not in st.session_state:
         st.error("Veuillez vous connecter pour accéder à l'analyse.")
     else:
         user_id = st.session_state['user_id']
         entries = DataEntry.find_by_user_id(user_id)
+
         if not entries:
             st.warning("Aucune donnée disponible pour l'analyse.")
+
         else:
             data = [{
                 "date": entry.date,
@@ -26,12 +34,74 @@ def display_analysis_page():
                 "Activité (min)": entry.activity_time,
                 "TUG (sec)": entry.timed_up_and_go_test,
                 "Amsler": entry.amsler,
-                "Audition": entry.hearing
+                "Score du test auditif": entry.hearing
             } for entry in entries]
             df = pd.DataFrame(data)
             st.dataframe(df)
-            # You can add plots here if needed, but the data structure has changed significantly
-            # Example: st.line_chart(df[["date", "Sommeil (h)"]].set_index("date"))
+
+            # Configuration des colonnes pour les boutons
+            col1, col2, col3 = st.columns(3)
+
+            # Création des boutons
+            with col1:
+                if st.button("Taille"):
+                    st.session_state.graph = "Taille"
+                if st.button("Poids"):
+                    st.session_state.graph = "Poids"
+                if st.button("IMC"):
+                    st.session_state.graph = "IMC"
+            with col2:
+                if st.button("Eau"):
+                    st.session_state.graph = "Eau"
+                if st.button("Calories"):
+                    st.session_state.graph = "Calories"
+                if st.button("Sommeil"):
+                    st.session_state.graph = "Sommeil"
+                    
+            with col3:
+                if st.button("Activité"):
+                    st.session_state.graph = "Activité"
+                if st.button("TUG"):
+                    st.session_state.graph = "TUG"
+                if st.button("Audition"):
+                    st.session_state.graph = "Audition"
+
+            # Zone fixe pour les graphiques
+            graph_placeholder = st.empty()
+
+             # Affichage conditionnel des graphiques
+            if 'graph' in st.session_state:
+                fig, ax = plt.subplots(figsize=(8, 4))
+                
+                # Mapping des colonnes
+                column_map = {
+                    "Taille": "Taille (cm)",
+                    "Poids": "Poids (kg)",
+                    "IMC": "IMC",
+                    "Eau": "Eau (L)",
+                    "Calories": "Calories",
+                    "Sommeil": "Sommeil (h)",
+                    "Activité": "Activité (min)",
+                    "TUG": "TUG (sec)",
+                    "Audition": "Audition"
+                }
+                
+                column = column_map[st.session_state.graph]
+                
+                # Création du graphique
+                ax.plot(df["date"], df[column], marker='o', linestyle='-')
+                ax.set_title(f"Évolution de {st.session_state.graph}")
+                ax.set_xlabel("Date")
+                ax.set_ylabel(column)
+                plt.xticks(rotation=45)
+                plt.tight_layout()
+                
+                # Affichage dans la zone réservée
+                with graph_placeholder.container():
+                    st.pyplot(fig)
+                
+                # Nettoyage après affichage
+                plt.close(fig)
 
 
 
