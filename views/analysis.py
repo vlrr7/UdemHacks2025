@@ -53,8 +53,10 @@ def display_analysis_page():
 
             # Bouton pour afficher/supprimer le graphe
             with col2:
-                st.write(" ")
-                st.write(" ")
+                st.write("")
+                st.empty()
+                st.empty()
+                st.empty()
                 if 'graph' in st.session_state and st.session_state.graph == selected_graph:
                     if st.button(f"Supprimer {selected_graph}"):
                         del st.session_state.graph
