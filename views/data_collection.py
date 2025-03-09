@@ -15,6 +15,7 @@ def display_data_collection_page():
         # Données générales
         st.subheader("Informations générales")
         age = st.number_input("Âge", min_value=0, step=1)
+        sexe = st.text_input("Sexe à la naissance", value = "Homme / Femme")
         height = st.number_input("Taille (cm)", min_value=50, max_value=250, step=1)
         weight = st.number_input("Poids (kg)", min_value=20.0, max_value=200.0, step=0.1)
         bmi = weight / ((height / 100) ** 2) if height > 0 else 0
@@ -36,6 +37,7 @@ def display_data_collection_page():
                 user_id=user_id,
                 date=date,
                 age=age,
+                sexe = sexe,
                 height=height,
                 weight=weight,
                 bmi=bmi,

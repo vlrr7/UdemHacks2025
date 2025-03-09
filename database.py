@@ -89,7 +89,7 @@ class User:
 # 2. CLASSE DATAENTRY (version modifiée)
 # -------------------------------------------------------------------------------
 class DataEntry:
-    def __init__(self, user_id, date, age, height, weight, bmi, water, calories, sleep, activity_time, timed_up_and_go_test, amsler, hearing, _id=None):
+    def __init__(self, user_id, date, age, sexe, height, weight, bmi, water, calories, sleep, activity_time, timed_up_and_go_test, amsler, hearing, _id=None):
         self._id = _id
         self.user_id = user_id
         
@@ -97,6 +97,7 @@ class DataEntry:
         
         # Nouveaux champs généraux
         self.age = age
+        self.sexe = sexe
         self.height = height  # Taille en cm
         self.weight = weight  # Poids en kg
         self.bmi = bmi  # Calculé automatiquement
@@ -118,6 +119,7 @@ class DataEntry:
             "user_id": self.user_id,
             "date": self.date,
             "age": self.age,
+            "sexe":self.sexe,
             "height": self.height,
             "weight": self.weight,
             "bmi": self.bmi,
@@ -144,6 +146,7 @@ class DataEntry:
                 user_id=doc["user_id"],
                 date=doc["date"],
                 age=doc["age"],
+                sexe=doc["sexe"],
                 height=doc["height"],
                 weight=doc["weight"],
                 bmi=doc["bmi"],

@@ -16,6 +16,7 @@ def display_analysis_page():
             data = [{
                 "date": entry.date,
                 "Âge": entry.age,
+                "Sexe": entry.sexe,
                 "Taille (cm)": entry.height,
                 "Poids (kg)": entry.weight,
                 "IMC": entry.bmi,

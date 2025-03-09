@@ -89,6 +89,7 @@ def display_social_page():
                             <div class="stat-box">
                                 <h4>📅 Données du {entry.date}</h4>
                                 <p>Âge : <strong>{entry.age}</strong></p>
+                                <p>Sexe : <strong>{entry.sexe}</strong></p>
                                 <p>Taille (cm) : <strong>{entry.height}</strong></p>
                                 <p>Poids (kg) : <strong>{entry.weight}</strong></p>
                                 <p>IMC : <strong>{entry.bmi:.2f}</strong></p>
@@ -103,6 +104,7 @@ def display_social_page():
                         """, unsafe_allow_html=True)
                     if st.button("Voir les statistiques globales"):
                         avg_age = sum(e.age for e in entries) / len(entries) if entries else 0
+                        avg_sexe = sum(e.sexe for e in entries) / len(entries) if entries else 0
                         avg_height = sum(e.height for e in entries) / len(entries) if entries else 0
                         avg_weight = sum(e.weight for e in entries) / len(entries) if entries else 0
                         avg_bmi = sum(e.bmi for e in entries) / len(entries) if entries else 0
@@ -113,6 +115,7 @@ def display_social_page():
                         avg_tug = sum(e.timed_up_and_go_test for e in entries) / len(entries) if entries else 0
                         st.session_state.friend_global = {
                             "Âge": avg_age,
+                            "Sexe": avg_sexe,
                             "Taille": avg_height,
                             "Poids": avg_weight,
                             "IMC": avg_bmi,
@@ -142,6 +145,7 @@ def display_social_page():
                             my_entries = DataEntry.find_by_user_id(user_id)
                             if my_entries:
                                 my_avg_age = sum(e.age for e in my_entries) / len(my_entries) if my_entries else 0
+                                my_avg_sexe = sum(e.sexe for e in my_entries) / len(my_entries) if my_entries else 0
                                 my_avg_height = sum(e.height for e in my_entries) / len(my_entries) if my_entries else 0
                                 my_avg_weight = sum(e.weight for e in my_entries) / len(my_entries) if my_entries else 0
                                 my_avg_bmi = sum(e.bmi for e in my_entries) / len(my_entries) if my_entries else 0
@@ -153,6 +157,7 @@ def display_social_page():
                                 st.session_state.comparison = {
                                     "user": {
                                         "Âge": my_avg_age,
+                                        "Sexe": my_avg_sexe,
                                         "Taille": my_avg_height,
                                         "Poids": my_avg_weight,
                                         "IMC": my_avg_bmi,

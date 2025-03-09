@@ -6,10 +6,12 @@ from views.analysis import display_analysis_page
 from views.social import display_social_page
 from views.gemini_overview import display_gemini_overview_page
 from views.parameters import display_parameters_page
+from views.normes import display_normes_page
+
 
 def main():
     menu = ["Connexion", "Inscription", "Collecte des Données",
-            "Analyse", "Social", "Gemini Predictions", "Paramètres"]
+            "Analyse", "Social", "Normes", "Gemini Predictions", "Paramètres"]
     # Configuration du menu latéral toujours ouvert
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "Connexion"
@@ -20,6 +22,7 @@ def main():
             if st.button(page, key=f"menu_{page}"):
                 st.session_state.current_page = page
 
+    
     
     # ----- Page de connexion -----
     if st.session_state.current_page == "Connexion":
@@ -40,8 +43,11 @@ def main():
     elif st.session_state.current_page == "Social":
         display_social_page()
 
+    elif st.session_state.current_page == "Normes":
+        display_normes_page()
+
     # ----- Prédictions Gemini -----
-    if st.session_state.current_page == "Gemini Predictions":
+    elif st.session_state.current_page == "Gemini Predictions":
         display_gemini_overview_page()
 
     # ----- Paramètres utilisateur -----

@@ -9,8 +9,8 @@ def generate_content(data):
         model="gemini-2.0-flash", contents=f"""{str(data)}. These are the user's data for an application that tracks
         their routine and health conditions and predicts their risk level for potential conditions.
         
-        Réponds uniquement avec les résultats demandés, sans aucun texte avant ou après la réponse. 
-        Formate la réponse exactement comme ceci :
+        Respond only with the requested results, without any text before or after the answer.
+        Format the response exactly like this (pay attention to spaces and line breaks):
         
         Niveau de risque: (Faible, Modéré, Élevé)
         Conditions potentiels: (Liste des conditions possibles)
