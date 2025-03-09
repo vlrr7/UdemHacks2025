@@ -13,7 +13,14 @@ def display_parameters_page():
         if not user:
             st.error("Utilisateur introuvable.")
         else:
-            
+              # --- Déconnexion ---
+            st.subheader("🚪 Déconnexion")
+            if st.button("Se déconnecter"):
+                del st.session_state['user_id']
+                st.success("Vous avez été déconnecté.")
+                st.session_state.current_page = "Connexion"
+                st.rerun()
+                
            # --- Changer le mot de passe ---
             st.subheader("🔑 Changer le mot de passe")
 
@@ -56,10 +63,4 @@ def display_parameters_page():
 
             st.markdown("---")
 
-            # --- Déconnexion ---
-            st.subheader("🚪 Déconnexion")
-            if st.button("Se déconnecter"):
-                del st.session_state['user_id']
-                st.success("Vous avez été déconnecté.")
-                st.session_state.current_page = "Connexion"
-                st.rerun()
+          
