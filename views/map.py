@@ -13,7 +13,7 @@ from streamlit_js_eval import get_geolocation
 import math
 
 
-
+ 
 def haversine_distance(coord1, coord2):
     """
     Calcule la distance en mètres entre deux points (lat, lon) en utilisant la formule de Haversine.
