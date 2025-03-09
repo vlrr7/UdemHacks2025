@@ -10,17 +10,27 @@ def display_data_collection_page():
         return  # Stop execution if not logged in
     else:
         user_id = st.session_state['user_id']
+
+        # Fetch the latest data entry for the user
+        entries = DataEntry.find_by_user_id(user_id)
+        latest_entry = entries[0] if entries else None
+
         unformatted_date = st.date_input("Date", datetime.date.today())
         date = datetime.datetime.combine(unformatted_date, datetime.datetime.min.time())
 
-        # --- ADD THESE LINES HERE ---
         # Initialize session state for persistent fields
-        if 'age' not in st.session_state:
+        if latest_entry:
+            st.session_state['age'] = latest_entry.age
+            st.session_state['height'] = latest_entry.height
+        else:
             st.session_state['age'] = 0
-        if 'sexe' not in st.session_state:
-            st.session_state['sexe_index'] = 0
-        if 'height' not in st.session_state:
             st.session_state['height'] = 50
+
+        if 'sexe_index' not in st.session_state:
+            st.session_state['sexe_index'] = 0
+        else:
+            st.session_state['sexe_index'] = ["Homme", "Femme"].index(latest_entry.sexe)
+
         # Données générales
         st.subheader("Informations générales")
         age = st.number_input(
@@ -30,11 +40,13 @@ def display_data_collection_page():
             value=st.session_state['age']  # Pull value from session state
         )
 
-        # sexe = st.text_input(
-        #     "Sexe à la naissance",
-        #     value=st.session_state['sexe']  # Pull value from session state
-        # )
-        sexe = st.selectbox("Sexe", ["Homme", "Femme"], index=st.session_state["sexe_index"])
+        sexe = st.selectbox(
+            "Sexe à la naissance",
+            options=["Homme", "Femme"],
+            index=st.session_state['sexe_index']
+        )
+        print(sexe)
+
         height = st.number_input(
             "Taille (cm)",
             min_value=50,
@@ -42,6 +54,7 @@ def display_data_collection_page():
             step=1,
             value=st.session_state['height']  # Pull value from session state
         )
+
         weight = st.number_input("Poids (kg)", min_value=20.0, max_value=200.0, step=0.1)
         bmi = weight / ((height / 100) ** 2) if height > 0 else 0
 

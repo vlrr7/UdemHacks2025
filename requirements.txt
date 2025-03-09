@@ -8,3 +8,4 @@ pandas
 bcrypt
 Werkzeug
 streamlit-autorefresh
+streamlit-geolocation
