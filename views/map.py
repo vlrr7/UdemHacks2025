@@ -1,222 +1,135 @@
 # views/map.py
-
 import streamlit as st
-import time
-import math
-import pydeck as pdk
-import datetime
 import pandas as pd
+import numpy as np
+from datetime import datetime
+import time
+from database import DataEntry, User
+import pydeck as pdk
 
-from bokeh.plotting import figure
-from bokeh.models.widgets import Button
-from bokeh.models import CustomJS, Div
-from bokeh.layouts import column
-
-from streamlit_bokeh_events import streamlit_bokeh_events
-from streamlit_autorefresh import st_autorefresh
-
-def haversine(lat1, lon1, lat2, lon2):
-    R = 6371e3  # mètres
-    def rad(x): return math.radians(x)
-    dlat = rad(lat2 - lat1)
-    dlon = rad(lon2 - lon1)
-    a = math.sin(dlat/2)**2 + math.cos(rad(lat1)) * math.cos(rad(lat2)) * math.sin(dlon/2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    return R * c
+def calculate_target_heart_rate(age):
+    max_hr = 220 - age
+    return {
+        'vo2max_zone': 0.85 * max_hr,
+        'anaerobic_threshold': 0.90 * max_hr,
+        'moderate': 0.70 * max_hr
+    }
 
 def display_map_page():
-    st.title("🚀 Tracking GPS en Temps Réel")
-
-    # Vérification connexion
+    st.title("Running Tracker")
+    
     if 'user_id' not in st.session_state:
-        st.error("🔒 Veuillez vous connecter pour accéder à cette fonctionnalité.")
+        st.error("Veuillez vous connecter")
         return
-
-    # Initialisation des états
-    defaults = {
-        'lat': None,
-        'lon': None,
-        'running': False,
-        'start_time': 0.0,
-        'trajectory': [],
-        'speeds': []
-    }
-    for key, value in defaults.items():
-        if key not in st.session_state:
-            st.session_state[key] = value
-
-    # Section Géolocalisation
-    with st.container():
-        st.markdown("### 📍 Obtenir la position initiale")
-        loc_button = Button(
-            label="Détecter ma position actuelle",
-            button_type="primary",
-            width=250,
-            height=40,
-            styles={"font-size": "14px"}
-        )
-        
-        # Script de géolocalisation
-        loc_button.js_on_event("button_click", CustomJS(code="""
-            if (!navigator.geolocation) {
-                document.dispatchEvent(new CustomEvent("GET_LOCATION", {
-                    detail: {error: "Géolocalisation non supportée par votre navigateur"}
-                }));
-            } else {
-                navigator.geolocation.getCurrentPosition(
-                    pos => {
-                        document.dispatchEvent(new CustomEvent("GET_LOCATION", {
-                            detail: {
-                                lat: pos.coords.latitude,
-                                lon: pos.coords.longitude,
-                                accuracy: pos.coords.accuracy
-                            }
-                        }));
-                    },
-                    err => {
-                        document.dispatchEvent(new CustomEvent("GET_LOCATION", {
-                            detail: {error: err.message}
-                        }));
-                    }
-                );
-            }
-        """))
-
-        result = streamlit_bokeh_events(
-            column(loc_button),
-            events="GET_LOCATION",
-            key="geo_events",
-            refresh_on_update=True,
-            override_height=100,
-            debounce_time=0
-        )
-
-    # Traitement résultat géolocalisation
-    if result and "GET_LOCATION" in result:
-        data = result["GET_LOCATION"]
-        if "error" in data:
-            st.error(f"Erreur de géolocalisation : {data['error']}")
-        else:
-            st.session_state.lat = data["lat"]
-            st.session_state.lon = data["lon"]
-            st.success(f"Position détectée : {data['lat']:.5f}, {data['lon']:.5f} (±{data.get('accuracy', '?')}m)")
-
-    # Contrôles d'enregistrement
-    col1, col2 = st.columns(2)
+    
+    user_id = st.session_state['user_id']
+    user_data = User.find_by_id(user_id)
+    
+    # Section configuration
+    with st.expander("Configuration de la séance"):
+        age = st.number_input("Âge", value=user_data.get('age', 25))
+        target_type = st.selectbox("Type d'entraînement", 
+                                ["VO2Max", "Seuil anaérobique", "Modéré"])
+    
+    # Calcul des cibles
+    heart_rates = calculate_target_heart_rate(age)
+    
+    # Initialisation des données de session
+    if 'run_data' not in st.session_state:
+        st.session_state.run_data = {
+            'timestamps': [],
+            'speeds': [],
+            'heart_rates': [],
+            'positions': []
+        }
+        st.session_state.run_start = None
+        st.session_state.elapsed = 0
+    
+    # Contrôles de la course
+    col1, col2, col3 = st.columns(3)
     with col1:
-        start_disabled = st.session_state.running or not st.session_state.lat
-        if st.button("Démarrer l'enregistrement", 
-                    disabled=start_disabled,
-                    type="primary",
-                    help="Commencer à enregistrer la trajectoire"):
-            st.session_state.running = True
-            st.session_state.start_time = time.time()
-            st.session_state.trajectory = [{
-                "lat": st.session_state.lat,
-                "lon": st.session_state.lon,
-                "timestamp": st.session_state.start_time
-            }]
-            st.session_state.speeds = [(st.session_state.start_time, 0.0)]
-            st.rerun()
-
+        if st.button("Démarrer la course"):
+            st.session_state.run_start = time.time()
     with col2:
-        if st.button("Arrêter l'enregistrement", 
-                   disabled=not st.session_state.running,
-                   type="secondary"):
-            st.session_state.running = False
-            st.rerun()
+        if st.button("Arrêter"):
+            st.session_state.run_start = None
+    with col3:
+        if st.button("Réinitialiser"):
+            st.session_state.run_data = {'timestamps': [], 'speeds': [], 'heart_rates': [], 'positions': []}
+            st.session_state.elapsed = 0
 
-    # Rafraîchissement automatique
-    if st.session_state.running:
-        st_autorefresh(interval=2000, key="track_refresh")
+    # Simulation de données (à remplacer par données réelles)
+    if st.session_state.run_start:
+        try:
+            gps_data = st.experimental_get_query_params()
+            lat = float(gps_data.get('lat', [0])[0])
+            lon = float(gps_data.get('lon', [0])[0])
+            new_position = [lat, lon]
+        except:
+            new_position = [48.8566, 2.3522]  # Fallback Paris
+        
 
-    # Mise à jour de la trajectoire
-    if st.session_state.running and st.session_state.lat and st.session_state.lon:
-        last_point = st.session_state.trajectory[-1]
-        if (abs(st.session_state.lat - last_point["lat"]) > 1e-6 or
-            abs(st.session_state.lon - last_point["lon"]) > 1e-6):
-            
-            now = time.time()
-            dt = max(now - last_point["timestamp"], 0.1)
-            distance = haversine(
-                last_point["lat"], last_point["lon"],
-                st.session_state.lat, st.session_state.lon
-            )
-            speed = (distance / dt) * 3.6  # Conversion en km/h
-
-            st.session_state.trajectory.append({
-                "lat": st.session_state.lat,
-                "lon": st.session_state.lon,
-                "timestamp": now
-            })
-            st.session_state.speeds.append((now, speed))
+        # Génération de données simulées
+        new_data = {
+            'timestamp': datetime.now(),
+            'speed': np.random.uniform(10, 15),  # km/h
+            'heart_rate': np.random.randint(120, 190),
+            'position': [
+                np.random.uniform(-0.0001, 0.0001) + 48.8566,  # Latitude 
+                np.random.uniform(-0.0001, 0.0001) + 2.3522     # Longitude
+            ]
+        }
+        
+        st.session_state.run_data['timestamps'].append(new_data['timestamp'])
+        st.session_state.run_data['speeds'].append(new_data['speed'])
+        st.session_state.run_data['heart_rates'].append(new_data['heart_rate'])
+        st.session_state.run_data['positions'].append(new_data['position'])
 
     # Affichage des métriques
-    if st.session_state.running:
-        cols = st.columns(3)
-        with cols[0]:
-            st.metric("Durée", datetime.timedelta(seconds=int(time.time() - st.session_state.start_time)))
-        with cols[1]:
-            current_speed = st.session_state.speeds[-1][1] if st.session_state.speeds else 0.0
-            st.metric("Vitesse actuelle", f"{current_speed:.1f} km/h")
-        with cols[2]:
-            total_distance = sum(
-                haversine(
-                    st.session_state.trajectory[i]["lat"], st.session_state.trajectory[i]["lon"],
-                    st.session_state.trajectory[i+1]["lat"], st.session_state.trajectory[i+1]["lon"]
-                ) for i in range(len(st.session_state.trajectory)-1)
-            )
-            st.metric("Distance totale", f"{total_distance:.0f} mètres")
+    if st.session_state.run_data['speeds']:
+        current_speed = st.session_state.run_data['speeds'][-1]
+        current_hr = st.session_state.run_data['heart_rates'][-1]
+    else:
+        current_speed = 0
+        current_hr = 0
 
-    # Visualisation de la carte
-    if st.session_state.trajectory:
-        df = pd.DataFrame(st.session_state.trajectory)
-        
-        view_state = pdk.ViewState(
-            latitude=df.iloc[-1]["lat"],
-            longitude=df.iloc[-1]["lon"],
-            zoom=15,
-            pitch=50,
-            bearing=0
+    metric_cols = st.columns(4)
+    metric_cols[0].metric("Temps", f"{int(st.session_state.elapsed // 60)}:{int(st.session_state.elapsed % 60):02d}")
+    metric_cols[1].metric("Vitesse (km/h)", f"{current_speed:.1f}")
+    metric_cols[2].metric("FC Actuelle", f"{current_hr} bpm")
+    metric_cols[3].metric("Cible FC", f"{heart_rates[target_type.lower()]:.0f} bpm")
+
+    # Carte PyDeck
+    if st.session_state.run_data['positions']:
+        df = pd.DataFrame({
+            'lat': [pos[0] for pos in st.session_state.run_data['positions']],
+            'lon': [pos[1] for pos in st.session_state.run_data['positions']]
+        })
+
+        layer = pdk.Layer(
+            'ScatterplotLayer',
+            data=df,
+            get_position='[lon, lat]',
+            get_color='[200, 30, 0, 160]',
+            get_radius=20,
         )
 
-        layers = [
-            pdk.Layer(
-                "PathLayer",
-                data=[[p["lon"], p["lat"]] for p in st.session_state.trajectory],
-                get_width=5,
-                get_color=[255, 40, 0],
-                pickable=True
-            ),
-            pdk.Layer(
-                "ScatterplotLayer",
-                data=df.iloc[-1:],
-                get_position=["lon", "lat"],
-                get_radius=100,
-                get_fill_color=[0, 200, 255],
-                get_line_color=[0, 0, 0],
-                pickable=True
-            )
-        ]
+        view_state = pdk.ViewState(
+            latitude=df['lat'].mean(),
+            longitude=df['lon'].mean(),
+            zoom=14,
+            pitch=50
+        )
 
         st.pydeck_chart(pdk.Deck(
-            map_style="road",
+            layers=[layer],
             initial_view_state=view_state,
-            layers=layers,
-            tooltip={
-                "html": "<b>Lat:</b> {lat:.5f}<br/><b>Lon:</b> {lon:.5f}",
-                "style": {"color": "white"}
-            }
+            map_style='mapbox://styles/mapbox/outdoors-v11'
         ))
 
-    # Graphique de vitesse
-    if st.session_state.speeds:
-        df_speed = pd.DataFrame(st.session_state.speeds, columns=["timestamp", "speed"])
-        df_speed["time"] = pd.to_datetime(df_speed["timestamp"], unit="s").dt.strftime("%H:%M:%S")
-        
-        st.area_chart(
-            df_speed.set_index("time")["speed"],
-            use_container_width=True,
-            color="#FF4B4B"
-        )
-        st.caption("Évolution de la vitesse au cours du temps")
+    # Graphiques
+    if st.session_state.run_data['speeds']:
+        st.line_chart(pd.DataFrame({
+            'Vitesse (km/h)': st.session_state.run_data['speeds'],
+            'Fréquence cardiaque': st.session_state.run_data['heart_rates']
+        }))

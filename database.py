@@ -37,8 +37,12 @@ follows_collection = db["follows"]
 # 2. CLASSE USER (remplace le modèle SQLAlchemy "User")
 # -------------------------------------------------------------------------------
 class User:
-    def __init__(self, username, password, email, created_at=None, _id=None):
+    def __init__(self, username, password, email, created_at=None, _id=None, age=25, sexe='M', weight=70, height=175):
         self._id = _id or ObjectId()
+        self.age = age
+        self.sexe = sexe
+        self.weight = weight
+        self.height = height
         self.username = username
         self.password = password
         self.email = email

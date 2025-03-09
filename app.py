@@ -11,7 +11,7 @@ from views.map import display_map_page
 
 def main():
     menu = ["Connexion", "Inscription", "Collecte des Données",
-            "Analyse", "Social", "Map", "Gemini Predictions", "Paramètres"]
+            "Analyse", "Social", "Map Running", "Gemini Predictions", "Paramètres"]
     # Configuration du menu latéral toujours ouvert
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "Connexion"
@@ -43,7 +43,7 @@ def main():
     elif st.session_state.current_page == "Social":
         display_social_page()
 
-    elif st.session_state.current_page == "Map":
+    elif st.session_state.current_page == "Map Running":
         display_map_page()
 
     # ----- Prédictions Gemini -----
