@@ -17,16 +17,17 @@ from views.parameters import display_parameters_page
 from views.map import display_map_page
 
 def main():
-    menu = ["Connexion", "Inscription", "Données", "Analyse", "Social", "Map Running", "AI Overview", "Paramètres"]
+    menu = ["Données", "Analyse", "Social", "Map Running", "AI Overview", "Paramètres"]
     
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "Connexion"
 
-    cols = st.columns(len(menu))
-    for i, page in enumerate(menu):
-        with cols[i]:
-            if st.button(page, key=f"menu_{page}", use_container_width=True):
-                st.session_state.current_page = page
+    if (st.session_state.current_page != "Connexion") and (st.session_state.current_page != "Inscription"):
+        cols = st.columns(len(menu))
+        for i, page in enumerate(menu):
+            with cols[i]:
+                if st.button(page, key=f"menu_{page}", use_container_width=True):
+                    st.session_state.current_page = page
 
     if st.session_state.current_page == "Connexion":
         display_connection_page()

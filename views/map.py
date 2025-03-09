@@ -51,27 +51,27 @@ def calculate_target_heart_rate(age):
 
 
 # Add this to capture JS messages
-def handle_geolocation_message():
-    # Generate a unique key using timestamp
-    unique_key = f"geolocation_async_{time.time()}"
+# def handle_geolocation_message():
+#     # Generate a unique key using timestamp
+#     unique_key = f"geolocation_async_{time.time()}"
     
-    result = st_javascript("""
-    new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-            position => resolve({
-                lat: position.coords.latitude,
-                lon: position.coords.longitude
-            }),
-            error => reject(error.message)
-        );
-    })
-    """, key=unique_key)  # Use dynamic key here
-    print("result : " + str(result))
-    if result and "lat" in result:
-        st.session_state.geolocation_result = (result["lat"], result["lon"])
-        #st.session_state.geolocation_received = True  # Set the flag
-    elif result and "error" in result:
-        st.error(f"Geolocation Error: {result['error']}")
+#     result = st_javascript("""
+#     new Promise((resolve, reject) => {
+#         navigator.geolocation.getCurrentPosition(
+#             position => resolve({
+#                 lat: position.coords.latitude,
+#                 lon: position.coords.longitude
+#             }),
+#             error => reject(error.message)
+#         );
+#     })
+#     """, key=unique_key)  # Use dynamic key here
+#     print("result : " + str(result))
+#     if result and "lat" in result:
+#         st.session_state.geolocation_result = (result["lat"], result["lon"])
+#         #st.session_state.geolocation_received = True  # Set the flag
+#     elif result and "error" in result:
+#         st.error(f"Geolocation Error: {result['error']}")
 
 def display_map_page():
     # handle_geolocation_message()  # <-- Add this line

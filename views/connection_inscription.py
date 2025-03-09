@@ -3,17 +3,29 @@ from database import login, register
 
 def display_connection_page():
     st.title("Connectez vous à HealthPro!")
-    st.header("Connexion",  )
+    st.header("Authentification")
     
     username = st.text_input("Nom d'utilisateur")
     password = st.text_input("Mot de passe", type="password")
-    if st.button("Se connecter"):
-        user = login(username, password)
-        if user:
-            st.success(f"Bienvenue {user.username}!")
-            st.session_state['user_id'] = user.id
-        else:
-            st.error("Identifiants incorrects")
+
+    with st.container():
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Se connecter"):
+                user = login(username, password)
+                if user:
+                    st.success(f"Bienvenue {user.username}!")
+                    st.session_state['user_id'] = user.id
+                    st.session_state.current_page = "Données"
+                    st.rerun()
+                else:
+                    st.error("Identifiants incorrects")
+        with col2:
+            coli, colj, colk, colm = st.columns(4)
+            colk.write("Pas encore inscrit ?")
+            if colm.button("S'inscrire"):
+                st.session_state.current_page = "Inscription"
+                st.rerun()
 
 
 def display_inscription_page():
@@ -28,5 +40,7 @@ def display_inscription_page():
         if user:
             st.success(msg)
             st.session_state['user_id'] = user.id
+            st.session_state.current_page = "Données"
+            st.rerun()
         else:
             st.error(msg)
