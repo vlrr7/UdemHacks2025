@@ -131,12 +131,16 @@ def display_map_page():
         if geo and geo["coords"]:
             new_position = [geo["coords"]["latitude"], geo["coords"]["longitude"]]
         else:
-            new_position = [48.8566, 2.3522]
-            st.info("🔍 Recherche du signal GPS...")
+        # Si aucune nouvelle donnée n'est disponible, conserver la dernière position connue (si elle existe)
+            if st.session_state.run_data['positions']:
+                new_position = st.session_state.run_data['positions'][-1]
+            else:
+                new_position = [48.8566, 2.3522]
+                st.info("🔍 Recherche du signal GPS...")
 
         # Calcule de la vitesse réelle si une position précédente existe
         current_timestamp = datetime.now()
-        if st.session_state.run_data['positions']:
+        if st.session_state.run_data['positions']: 
             previous_position = st.session_state.run_data['positions'][-1]
             previous_timestamp = st.session_state.run_data['timestamps'][-1]
             time_diff = (current_timestamp - previous_timestamp).total_seconds()
