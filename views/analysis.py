@@ -100,23 +100,22 @@ def display_analysis_page():
                 # Nettoyage après affichage
                 plt.close(fig)
 
+        st.markdown("---")
+        # Saisie des critères
+        update_session_state()
+        age = st.number_input("Âge (ans)", min_value=0, max_value=150, value=st.session_state['age'])
+        sexe = st.selectbox("Sexe", ["Homme", "Femme"], index=st.session_state['sexe_index'])
 
-    st.markdown("---")
-    # Saisie des critères
-    update_session_state()
-    age = st.number_input("Âge (ans)", min_value=0, max_value=150, value=st.session_state['age'])
-    sexe = st.selectbox("Sexe", ["Homme", "Femme"], index=st.session_state['sexe_index'])
-
-    if st.button("Afficher les normes"):
-        try:
-            # Lecture du fichier CSV avec ";" comme délimiteur et "," comme séparateur décimal
-            df_normes = pd.read_csv("normes.csv", delimiter=";", decimal=",")
-            # Filtrer le DataFrame en fonction de l'âge et du sexe
-            norme = df_normes[(df_normes["Âge (ans)"] == age) & (df_normes["Sexe"] == sexe)]
-            if norme.empty:
-                st.error("Aucune norme trouvée pour ces critères.")
-            else:
-                st.write(f"Normes pour {sexe} de {age} ans :")
-                st.dataframe(norme)
-        except Exception as e:
-            st.error("Erreur lors de la lecture du fichier CSV : " + str(e))
+        if st.button("Afficher les normes"):
+            try:
+                # Lecture du fichier CSV avec ";" comme délimiteur et "," comme séparateur décimal
+                df_normes = pd.read_csv("normes.csv", delimiter=";", decimal=",")
+                # Filtrer le DataFrame en fonction de l'âge et du sexe
+                norme = df_normes[(df_normes["Âge (ans)"] == age) & (df_normes["Sexe"] == sexe)]
+                if norme.empty:
+                    st.error("Aucune norme trouvée pour ces critères.")
+                else:
+                    st.write(f"Normes pour {sexe} de {age} ans :")
+                    st.dataframe(norme)
+            except Exception as e:
+                st.error("Erreur lors de la lecture du fichier CSV : " + str(e))
