@@ -74,6 +74,7 @@ def display_data_collection_page():
                 amsler=amsler,
                 hearing=hearing
             )
+        
         new_entry.save()
         
         st.session_state['age'] = age    # Save to session state
