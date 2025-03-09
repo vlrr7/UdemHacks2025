@@ -27,7 +27,7 @@ def display_data_collection_page():
 
         # Données pour ainés (optionnelles)
         st.subheader("Pour les seniors (optionnel)")
-        tug = st.number_input("Temps TUG (sec)", min_value=0.0, step=0.1, value=0.0)
+        tug = st.number_input("Test de 'Timed up and go' (sec) - Temps que ça vous prend pour vous lever d'une position assise", min_value=0.0, step=0.1, value=0.0)
         amsler = st.text_input("Résultat test visuel (Amsler)", value="Normal")
         hearing = st.text_input("Résultat test auditif", value="Normal")
         if st.button("Enregistrer les données"):
