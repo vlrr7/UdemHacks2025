@@ -169,35 +169,29 @@ def display_social_page():
             
                     if 'comparison_mode' in st.session_state and st.session_state.comparison_mode:
                         col1, col2 = st.columns(2)
-                        with col1:
-                            st.markdown("""
-                                <div class="comparison-box">
-                                    <h4>Vos statistiques</h4>
-                            """, unsafe_allow_html=True)
-                            st.write(f"Âge : {st.session_state.comparison['user']['Âge']:.1f}")
-                            st.write(f"Taille : {st.session_state.comparison['user']['Taille']:.1f} cm")
-                            st.write(f"Poids : {st.session_state.comparison['user']['Poids']:.1f} kg")
-                            st.write(f"IMC : {st.session_state.comparison['user']['IMC']:.1f}")
-                            st.write(f"💧 Eau : {st.session_state.comparison['user']['Eau']:.1f} L")
-                            st.write(f"Calories : {st.session_state.comparison['user']['Calories']:.1f}")
-                            st.write(f"😴 Sommeil : {st.session_state.comparison['user']['Sommeil']:.1f} h")
-                            st.write(f"Activité : {st.session_state.comparison['user']['Activité']:.1f} min")
-                            st.write(f"TUG : {st.session_state.comparison['user']['TUG']:.1f} sec")
-                            st.markdown("</div>", unsafe_allow_html=True)
+                        with col1 as c:
+                            container = st.container(border=True, border_radius=10)
+                            container.write(f"Âge : {st.session_state.comparison['user']['Âge']:.1f}")
+                            container.write(f"Taille : {st.session_state.comparison['user']['Taille']:.1f} cm")
+                            container.write(f"Poids : {st.session_state.comparison['user']['Poids']:.1f} kg")
+                            container.write(f"IMC : {st.session_state.comparison['user']['IMC']:.1f}")
+                            container.write(f"💧 Eau : {st.session_state.comparison['user']['Eau']:.1f} L")
+                            container.write(f"Calories : {st.session_state.comparison['user']['Calories']:.1f}")
+                            container.write(f"😴 Sommeil : {st.session_state.comparison['user']['Sommeil']:.1f} h")
+                            container.write(f"Activité : {st.session_state.comparison['user']['Activité']:.1f} min")
+                            container.write(f"TUG : {st.session_state.comparison['user']['TUG']:.1f} sec")
+
                         with col2:
-                            st.markdown(f"""
-                                <div class="comparison-box">
-                                    <h4>Statistiques de {selected_user["username"]}</h4>
-                            """, unsafe_allow_html=True)
-                            st.write(f"Âge : {st.session_state.comparison['friend']['Âge']:.1f}")
-                            st.write(f"Taille : {st.session_state.comparison['friend']['Taille']:.1f} cm")
-                            st.write(f"Poids : {st.session_state.comparison['friend']['Poids']:.1f} kg")
-                            st.write(f"IMC : {st.session_state.comparison['friend']['IMC']:.1f}")
-                            st.write(f"💧 Eau : {st.session_state.comparison['friend']['Eau']:.1f} L")
-                            st.write(f"Calories : {st.session_state.comparison['friend']['Calories']:.1f}")
-                            st.write(f"😴 Sommeil : {st.session_state.comparison['friend']['Sommeil']:.1f} h")
-                            st.write(f"Activité : {st.session_state.comparison['friend']['Activité']:.1f} min")
-                            st.write(f"TUG : {st.session_state.comparison['friend']['TUG']:.1f} sec")
-                            st.markdown("</div>", unsafe_allow_html=True)
+                            container = st.container(border=True, border_radius=10)
+                            container.write(f"Âge : {st.session_state.comparison['friend']['Âge']:.1f}")
+                            container.write(f"Taille : {st.session_state.comparison['friend']['Taille']:.1f} cm")
+                            container.write(f"Poids : {st.session_state.comparison['friend']['Poids']:.1f} kg")
+                            container.write(f"IMC : {st.session_state.comparison['friend']['IMC']:.1f}")
+                            container.write(f"💧 Eau : {st.session_state.comparison['friend']['Eau']:.1f} L")
+                            container.write(f"Calories : {st.session_state.comparison['friend']['Calories']:.1f}")
+                            container.write(f"😴 Sommeil : {st.session_state.comparison['friend']['Sommeil']:.1f} h")
+                            container.write(f"Activité : {st.session_state.comparison['friend']['Activité']:.1f} min")
+                            container.write(f"TUG : {st.session_state.comparison['friend']['TUG']:.1f} sec")
+                            
                         if st.button("Retour aux statistiques simples"):
                             del st.session_state.comparison_mode
