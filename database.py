@@ -88,7 +88,7 @@ class DataEntry:
         self.activity_time = kwargs.get('activity_time', 0)  # Temps d'activité en min
         
         # Données pour seniors (optionnelles)
-        self.tug = kwargs.get('tug', 0.0)  # Test TUG en secondes
+        self.timed_up_and_go_test = kwargs.get('timed_up_and_go_test', 0.0)  # Test timed_up_and_go_test en secondes
         self.amsler = kwargs.get('amsler', "Normal")  # Résultat Amsler
         self.hearing = kwargs.get('hearing', "Normal")  # Résultat auditif
         
@@ -106,7 +106,7 @@ class DataEntry:
             "calories": self.calories,
             "sleep": self.sleep,
             "activity_time": self.activity_time,
-            "tug": self.tug,
+            "timed_up_and_go_test": self.timed_up_and_go_test,
             "amsler": self.amsler,
             "hearing": self.hearing
         }
@@ -132,7 +132,7 @@ class DataEntry:
                 calories=doc.get("calories", 0),
                 sleep=doc.get("sleep", 0.0),
                 activity_time=doc.get("activity_time", 0),
-                tug=doc.get("tug", 0.0),
+                timed_up_and_go_test=doc.get("timed_up_and_go_test", 0.0),
                 amsler=doc.get("amsler", "Normal"),
                 hearing=doc.get("hearing", "Normal"),
                 _id=doc["_id"]
