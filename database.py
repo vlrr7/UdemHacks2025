@@ -20,6 +20,30 @@ def register(username, password, email):
     user.save()
     return user, "Registration successful"
 
+def update_session_state():
+    user_id = st.session_state['user_id']
+
+    # Fetch the latest data entry for the user
+    entries = DataEntry.find_by_user_id(user_id)
+    latest_entry = entries[-1] if entries else None
+
+    # Initialize session state for persistent fields
+    if latest_entry:
+        st.session_state['age'] = latest_entry.age
+        st.session_state['height'] = latest_entry.height
+        print(latest_entry.height)
+    else:
+        st.session_state['age'] = 0
+        st.session_state['height'] = 50
+
+    try:
+        if (latest_entry):
+            st.session_state['sexe_index'] = ["Homme", "Femme"].index(latest_entry.sexe)
+        else:
+            st.session_state['sexe_index'] = 0
+    except ValueError:
+        st.session_state['sexe_index'] = 0
+
 
 # -------------------------------------------------------------------------------
 # 1. CONNEXION À MONGODB ATLAS

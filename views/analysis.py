@@ -1,5 +1,5 @@
 import streamlit as st
-from database import DataEntry
+from database import DataEntry, update_session_state
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -106,8 +106,9 @@ def display_analysis_page():
 
 
     # Saisie des critères
-    age = st.number_input("Âge (ans)", min_value=1, max_value=150, value=25)
-    sexe = st.selectbox("Sexe", ["Homme", "Femme"])
+    update_session_state()
+    age = st.number_input("Âge (ans)", min_value=1, max_value=150, value=st.session_state['age'])
+    sexe = st.selectbox("Sexe", ["Homme", "Femme"], index=st.session_state['sexe_index'])
 
     if st.button("Afficher les normes"):
         try:
