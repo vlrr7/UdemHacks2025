@@ -1,6 +1,6 @@
 import streamlit as st
 from database import DataEntry
-from ai_manager import gemini_predict
+from ai_manager import generate_content
 
 def display_gemini_overview_page():
     st.title("HealthPro")
@@ -34,6 +34,6 @@ def display_gemini_overview_page():
                 "timed_up_and_go_test": avg_tug
             }
             st.write("Données agrégées pour la prédiction :", user_data)
-            prediction = gemini_predict(user_data)
+            prediction = generate_content(user_data)
             st.subheader("Résultat de la prédiction")
             st.write(f"{prediction}")
