@@ -107,7 +107,7 @@ def display_analysis_page():
 
     # Saisie des critères
     update_session_state()
-    age = st.number_input("Âge (ans)", min_value=1, max_value=150, value=st.session_state['age'])
+    age = st.number_input("Âge (ans)", min_value=0, max_value=150, value=st.session_state['age'])
     sexe = st.selectbox("Sexe", ["Homme", "Femme"], index=st.session_state['sexe_index'])
 
     if st.button("Afficher les normes"):

@@ -1,6 +1,6 @@
 import streamlit as st
+from database import DataEntry, update_session_state
 import datetime
-from database import DataEntry
 
 def display_data_collection_page():
     st.title("HealthPro")
@@ -9,31 +9,12 @@ def display_data_collection_page():
         st.error("Veuillez vous connecter pour saisir vos données.")
         return  # Stop execution if not logged in
     else:
-        user_id = st.session_state['user_id']
+        update_session_state()
 
-        # Fetch the latest data entry for the user
-        entries = DataEntry.find_by_user_id(user_id)
-        latest_entry = entries[-1] if entries else None
+        user_id = st.session_state['user_id']
 
         unformatted_date = st.date_input("Date", datetime.date.today())
         date = datetime.datetime.combine(unformatted_date, datetime.datetime.min.time())
-
-        # Initialize session state for persistent fields
-        if latest_entry:
-            st.session_state['age'] = latest_entry.age
-            st.session_state['height'] = latest_entry.height
-            print(latest_entry.height)
-        else:
-            st.session_state['age'] = 0
-            st.session_state['height'] = 50
-
-        try:
-            if (latest_entry):
-                st.session_state['sexe_index'] = ["Homme", "Femme"].index(latest_entry.sexe)
-            else:
-                st.session_state['sexe_index'] = 0
-        except ValueError:
-            st.session_state['sexe_index'] = 0
 
         # Données générales
         st.subheader("Informations générales")
@@ -93,8 +74,8 @@ def display_data_collection_page():
             )
             new_entry.save()
         
-            # st.session_state['age'] = age    # Save to session state
-            # st.session_state['sexe'] = sexe
-            # st.session_state['height'] = height
+            st.session_state['age'] = age
+            st.session_state['sexe'] = sexe
+            st.session_state['height'] = height
             
             st.success("Données enregistrées avec succès!")
