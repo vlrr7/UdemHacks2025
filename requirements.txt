@@ -9,3 +9,4 @@ bcrypt
 Werkzeug
 streamlit-autorefresh
 streamlit-geolocation
+streamlit-bokeh-events
