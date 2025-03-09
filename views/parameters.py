@@ -1,5 +1,6 @@
 import streamlit as st
 from database import User, users_collection
+from werkzeug.security import generate_password_hash, check_password_hash
 
 def display_parameters_page():
     st.title("HealthPro")
@@ -47,25 +48,18 @@ def display_parameters_page():
 
             st.markdown("---")
 
-            # --- Changer les informations personnelles ---
-            st.subheader("👤 Modifier les informations générales")
-
-            new_username = st.text_input("Nouveau nom d'utilisateur", value=user["username"])
-            new_age = st.number_input("Âge", min_value=0, step=1, value=user["age"])
-            new_sexe = st.selectbox("Sexe", ["Homme", "Femme", "Autre"], index=["Homme", "Femme", "Autre"].index(user["sexe"]))
-            new_height = st.number_input("Taille (cm)", min_value=50, max_value=250, step=1, value=user["height"])
-            new_weight = st.number_input("Poids (kg)", min_value=20.0, max_value=200.0, step=0.1, value=user["weight"])
-
-            if st.button("Enregistrer les modifications"):
-                user["username"] = new_username
-                user["age"] = new_age
-                user["sexe"] = new_sexe
-                user["height"] = new_height
-                user["weight"] = new_weight
-
-                # Save changes to MongoDB
-                users_collection.update_one({"_id": user["_id"]}, {"$set": user})
-
-                st.success("Informations mises à jour avec succès.")
-
-            st.markdown("---")
+            # --- Supprimer le compte ---
+            st.subheader("🗑️ Supprimer le compte")
+            st.warning("⚠️ Cette action est irréversible. Votre compte sera définitivement supprimé.")
+            
+            delete_password = generate_password_hash(st.text_input("Entrez votre mot de passe pour confirmer", type="password"))
+            
+            if st.button("Supprimer mon compte"):
+                if user["password"] == delete_password: # Verify password
+                    users_collection.delete_one({"_id":user_id})  # Delete user from DB
+                    del st.session_state['user_id']  # Clear session
+                    st.success("Votre compte a été supprimé avec succès. Redirection vers la page d'accueil...")
+                    st.session_state.current_page = "Accueil"
+                    st.rerun()
+                else:
+                    st.error("Mot de passe incorrect. Impossible de supprimer le compte.")
