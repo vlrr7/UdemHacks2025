@@ -8,11 +8,11 @@ import json
 
 def main():
     st.title("Application HealthPro")
-    menu = ["Accueil", "Connexion", "Inscription", "Collecte des Données",
+    menu = ["Connexion", "Inscription", "Collecte des Données",
             "Analyse", "Social", "Gemini Predictions", "Paramètres"]
     # Configuration du menu latéral toujours ouvert
     if 'current_page' not in st.session_state:
-        st.session_state.current_page = "Accueil"
+        st.session_state.current_page = "Connexion"
 
     with st.sidebar:
         st.markdown("### Navigation")
@@ -20,13 +20,9 @@ def main():
             if st.button(page, key=f"menu_{page}"):
                 st.session_state.current_page = page
 
-    # ----- Page d'accueil -----
-    if st.session_state.current_page == "Accueil":
-        st.header("Bienvenue sur l'application HealthPro")
-        st.write("Veuillez vous connecter ou vous inscrire pour commencer.")
-
+    
     # ----- Page de connexion -----
-    elif st.session_state.current_page == "Connexion":
+    if st.session_state.current_page == "Connexion":
         st.header("Connexion")
         username = st.text_input("Nom d'utilisateur")
         password = st.text_input("Mot de passe", type="password")
@@ -128,8 +124,9 @@ def main():
             follow_username = st.text_input("Nom d'utilisateur à suivre")
             if st.button("Suivre"):
                 user_to_follow = User.find_by_username(follow_username)
-                if user_to_follow:
-                    print(user_to_follow)
+                if user_id == user_to_follow["_id"]:
+                    st.info("Vous ne pouvez pas vous suivre vous-même.")  
+                elif user_to_follow:
                     if not Follow.find_one(user_id, str(user_to_follow)):
                         new_follow = Follow(follower_id=user_id, followed_id=str(user_to_follow["_id"]))
                         new_follow.save()
@@ -149,7 +146,7 @@ def main():
                 cols = st.columns(len(followed_users))
                 for i, friend in enumerate(followed_users):
                     with cols[i]:
-                        if st.button(friend["username"], key=f"friend_{friend["_id"]}"):
+                        if st.button(friend["username"], key=f"friend_{friend["_id"]}_{i}"):
                             st.session_state.selected_user_id = str(friend["_id"])
                             st.session_state.comparison_mode = False
                 if 'selected_user_id' in st.session_state:
@@ -165,6 +162,29 @@ def main():
                     if not entries:
                         st.warning("Aucune donnée disponible pour cet utilisateur.")
                     else:
+                        st.markdown(f"""<style>
+                            .stat-box {{
+                                border: 1px solid #ccc;
+                                padding: 10px;
+                                margin: 10px;
+                                border-radius: 5px;
+                            }}
+                            .stat-box h4 {{
+                                margin-top: 0;
+                                margin-bottom: 10px;
+                            }}
+                            .comparison-box {{
+                                border: 1px solid #ccc;
+                                padding: 10px;
+                                margin: 10px;
+                                border-radius: 5px;
+                            }}
+                            .comparison-box h4 {{
+                                margin-top: 0;
+                                margin-bottom: 10px;
+                            }} </style>
+                        """, unsafe_allow_html=True)
+                        
                         available_dates = [entry.date for entry in entries]
                         selected_date = st.selectbox("Sélectionnez une date", available_dates)
                         entry = next((e for e in entries if e.date == selected_date), None)
@@ -253,7 +273,7 @@ def main():
             
 
     # ----- Prédictions Gemini -----
-    elif st.session_state.current_page == "Gemini Predictions":
+    if st.session_state.current_page == "Gemini Predictions":
         st.header("Prédictions et Recommandations (Gemini)")
         if 'user_id' not in st.session_state:
             st.error("Veuillez vous connecter pour accéder aux prédictions.")

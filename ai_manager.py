@@ -14,10 +14,10 @@ def gemini_predict(data):
     Pour une intégration réelle, utilisez requests pour envoyer vos données à l'API.
     """
     # Ici, nous retournons une réponse fictive :
-    # client = genai.Client(api_key="YOUR_API_KEY")
-    # response = client.models.generate_content(
-    #     model="gemini-2.0-flash", contents=[{"text": input_text}])
-    # return response.text
+    client = genai.Client(api_key=st.secrets.GEMINI_API_KEY)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash", contents=[{"text": str(data)}])
+    return response.text
 
     prediction = {
         "risk_level": "Faible",
