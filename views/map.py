@@ -2,103 +2,167 @@
 
 import streamlit as st
 import time
-import pandas as pd
+import math
+import pydeck as pdk
 import datetime
 
+# --- Pour calculer la distance entre deux points (lat, lon) ---
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371e3  # Rayon de la Terre en mètres
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    a = (math.sin(dphi/2)**2 +
+         math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2)
+    c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))
+    return R * c  # distance en mètres
+
 def display_map_page():
-    st.title("Entraînement sur Carte")
-    st.write("""
-    Sur cette page, vous pouvez suivre votre course sur une carte, 
-    afficher vos données de vitesse, fréquence cardiaque cible, 
-    VO2 max, etc., ainsi qu'utiliser un chronomètre pour mesurer 
-    votre performance en temps réel.
-    """)
+    st.title("Activité de Course - Suivi en Temps Réel")
 
-    # --- 1) Coordonnées GPS ---
-    st.subheader("Localisation GPS")
-    # Par défaut, on centre la carte sur Paris (lat=48.8566, lon=2.3522) par exemple
-    lat = st.number_input("Latitude", value=48.8566, format="%.6f")
-    lon = st.number_input("Longitude", value=2.3522, format="%.6f")
+    # 1) Récupérer les infos de l'utilisateur depuis la base
+    # (Ici, on suppose que vous avez déjà st.session_state['user_id'] et une fonction
+    #  pour récupérer le profil complet, y compris l'âge, la VO2max, etc. 
+    #  Ex: user_profile = get_user_profile(st.session_state['user_id']) )
+    if 'user_id' not in st.session_state:
+        st.error("Veuillez vous connecter pour accéder à la carte.")
+        return
+    # user_profile = get_user_profile(st.session_state['user_id'])  # Pseudo-code
 
-    # DataFrame minimal pour st.map()
-    map_data = pd.DataFrame({"lat": [lat], "lon": [lon]})
-    st.map(map_data)
+    # 2) Initialiser les variables de session
+    if 'running' not in st.session_state:
+        st.session_state.running = False
+    if 'start_time' not in st.session_state:
+        st.session_state.start_time = 0
+    if 'trajectory' not in st.session_state:
+        # Liste de dicts : [{lat, lon, timestamp}, ...]
+        st.session_state.trajectory = []
+    if 'speeds' not in st.session_state:
+        # Liste de (timestamp, speed_kmh)
+        st.session_state.speeds = []
 
-    # --- 2) Saisie / Simulation des données en direct ---
-    st.subheader("Données en direct")
-    speed = st.number_input("Vitesse (km/h)", min_value=0.0, value=10.0, step=0.1)
-    heart_rate = st.number_input("Fréquence cardiaque (bpm)", min_value=40, max_value=220, value=120)
-    
-    # Calcul d'une FC cible ou VO2max simple (exemple) :
-    #  - FC max théorique ~ 220 - âge
-    #  - VO2max (exemple simplifié) = 15.3 * (FCmax / FC repos)
-    #  - Seuil anaérobie ~ 85% de FC max
-    age = st.number_input("Âge (ans)", min_value=1, max_value=120, value=30)
-    fc_max = 220 - age
-    fc_cible = 0.7 * fc_max  # 70% en exemple
-    st.write(f"FC max théorique : {fc_max:.0f} bpm")
-    st.write(f"FC cible (~70% FC max) : {fc_cible:.0f} bpm")
-    
-    # --- 3) Chronomètre ---
-    st.subheader("Chronomètre")
-    if "start_time" not in st.session_state:
-        st.session_state.start_time = None
-    if "elapsed" not in st.session_state:
-        st.session_state.elapsed = 0.0
-
+    # 3) Boutons pour démarrer / arrêter
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Démarrer"):
+        if st.button("Commencer", disabled=st.session_state.running):
+            st.session_state.running = True
             st.session_state.start_time = time.time()
-        if st.button("Arrêter"):
-            if st.session_state.start_time:
-                st.session_state.elapsed += time.time() - st.session_state.start_time
-                st.session_state.start_time = None
+            st.session_state.trajectory.clear()
+            st.session_state.speeds.clear()
+            st.experimental_rerun()
+
     with col2:
-        if st.button("Remettre à zéro"):
-            st.session_state.start_time = None
-            st.session_state.elapsed = 0.0
+        if st.button("Arrêter", disabled=not st.session_state.running):
+            st.session_state.running = False
+            st.experimental_rerun()
 
-    # Calcul du temps écoulé si le chrono est en cours
-    if st.session_state.start_time:
-        current_elapsed = (time.time() - st.session_state.start_time) + st.session_state.elapsed
-    else:
-        current_elapsed = st.session_state.elapsed
+    # 4) Si on est en mode “running”, on met à jour en temps réel
+    if st.session_state.running:
+        # Chronomètre
+        elapsed_sec = time.time() - st.session_state.start_time
+        minutes, seconds = divmod(int(elapsed_sec), 60)
+        st.write(f"**Temps écoulé** : {minutes:02d}:{seconds:02d}")
 
-    # Formatage du temps écoulé en mm:ss
-    minutes, seconds = divmod(int(current_elapsed), 60)
-    st.write(f"Temps écoulé : **{minutes:02d}:{seconds:02d}**")
+        # Simuler ou récupérer la position en temps réel
+        # ------------------------------------------------
+        # Pour l'exemple, on va juste faire bouger la latitude
+        # d'environ 0.0001 degrés par seconde.
+        # Remplacez ceci par votre code de géolocalisation réel.
+        if len(st.session_state.trajectory) == 0:
+            # Point de départ
+            lat0, lon0 = 48.8566, 2.3522  # Paris
+        else:
+            lat0 = st.session_state.trajectory[-1]['lat']
+            lon0 = st.session_state.trajectory[-1]['lon']
 
-    # --- 4) Historique de la vitesse pour le graphique ---
-    # On peut stocker la vitesse courante à chaque "run" dans st.session_state
-    if "speed_history" not in st.session_state:
-        st.session_state.speed_history = []
-    if st.button("Enregistrer la vitesse"):
-        # On enregistre un tuple (timestamp, speed)
-        st.session_state.speed_history.append((datetime.datetime.now(), speed))
-        st.success("Vitesse ajoutée à l'historique.")
+        # Calcul d'un petit déplacement (ex: 0.0001° en latitude)
+        # en fonction du temps écoulé (ex: 1 point par "run").
+        lat_new = lat0 + 0.0001
+        lon_new = lon0
 
-    # Affichage du graphique
-    if st.session_state.speed_history:
-        df_speed = pd.DataFrame(st.session_state.speed_history, columns=["time", "speed"])
-        df_speed = df_speed.set_index("time")
-        st.line_chart(df_speed["speed"], height=200)
-        st.write("Évolution de la vitesse (km/h) dans le temps.")
+        # Calcul de la distance (en mètres) + vitesse
+        if len(st.session_state.trajectory) > 0:
+            dist_m = haversine(lat0, lon0, lat_new, lon_new)
+            dt = 1  # On suppose 1 seconde entre 2 runs => simplification
+            speed_ms = dist_m / dt  # m/s
+            speed_kmh = speed_ms * 3.6
+        else:
+            speed_kmh = 0.0
 
-    # --- 5) Intégration potentielle avec la base de données ---
-    # Vous pouvez stocker la localisation, la vitesse et les autres données
-    # dans une collection "training_sessions" pour un historique plus complet.
-    # Ce code n'est pas obligatoire, c'est juste une piste :
-    # if st.button("Enregistrer la session dans la base"):
-    #     training_session = {
-    #         "user_id": st.session_state['user_id'],
-    #         "timestamp": datetime.datetime.now(),
-    #         "lat": lat,
-    #         "lon": lon,
-    #         "speed_history": st.session_state.speed_history,
-    #         "heart_rate": heart_rate,
-    #         "fc_cible": fc_cible,
-    #         ...
-    #     }
-    #     training_sessions_collection.insert_one(training_session)
-    #     st.success("Session enregistrée.")
+        # Enregistrer le nouveau point
+        st.session_state.trajectory.append({
+            "lat": lat_new,
+            "lon": lon_new,
+            "timestamp": time.time()
+        })
+        # Enregistrer la vitesse
+        st.session_state.speeds.append((time.time(), speed_kmh))
+
+        # Forcer un re-run après 1 seconde pour actualiser
+        st.experimental_rerun()
+
+    # 5) Afficher le chronomètre si non-running
+    if not st.session_state.running and st.session_state.start_time > 0:
+        total_sec = st.session_state.speeds[-1][0] - st.session_state.start_time if st.session_state.speeds else 0
+        minutes, seconds = divmod(int(total_sec), 60)
+        st.write(f"**Activité terminée** - Temps total : {minutes:02d}:{seconds:02d}")
+
+    # 6) Affichage de la carte (PyDeck) avec la trajectoire
+    if len(st.session_state.trajectory) > 0:
+        # DataFrame des points
+        import pandas as pd
+        df_points = pd.DataFrame(st.session_state.trajectory)
+
+        # Couche "trajet" => line_layer
+        # On doit transformer la liste des points en segments
+        # simple : on dessine un polygone reliant les points
+        line_data = []
+        for i in range(len(df_points) - 1):
+            p1 = df_points.iloc[i]
+            p2 = df_points.iloc[i+1]
+            line_data.append([[p1["lon"], p1["lat"]], [p2["lon"], p2["lat"]]])
+
+        line_layer = pdk.Layer(
+            "PathLayer",
+            line_data,
+            get_path="object",
+            get_width=5,
+            width_min_pixels=2,
+            get_color=[255, 0, 0],
+            pickable=True
+        )
+
+        # Couche "points"
+        point_layer = pdk.Layer(
+            "ScatterplotLayer",
+            data=df_points,
+            get_position=["lon", "lat"],
+            get_color=[0, 128, 255],
+            get_radius=30,
+        )
+
+        # Définir la vue (centrée sur le dernier point)
+        last_point = df_points.iloc[-1]
+        view_state = pdk.ViewState(
+            longitude=last_point["lon"],
+            latitude=last_point["lat"],
+            zoom=15
+        )
+
+        r = pdk.Deck(
+            layers=[line_layer, point_layer],
+            initial_view_state=view_state,
+            map_style="mapbox://styles/mapbox/streets-v11"
+        )
+        st.pydeck_chart(r)
+
+    # 7) Afficher le graphique de vitesse
+    if len(st.session_state.speeds) > 0:
+        import pandas as pd
+        df_speeds = pd.DataFrame(st.session_state.speeds, columns=["timestamp", "speed_kmh"])
+        df_speeds["time"] = df_speeds["timestamp"].apply(
+            lambda t: datetime.datetime.fromtimestamp(t).strftime("%H:%M:%S")
+        )
+        df_speeds.set_index("time", inplace=True)
+        st.line_chart(df_speeds["speed_kmh"], height=200)
+        st.write("Évolution de la vitesse (km/h).")
