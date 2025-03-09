@@ -56,7 +56,7 @@ def display_parameters_page():
             
             if st.button("Supprimer mon compte"):
                 if check_password_hash(user["password"], delete_password):  # Verify password
-                    users_collection.delete_one({"_id": (user_id)})  # Delete user from DB
+                    users_collection.delete_one({"_id": (user._id)})  # Delete user from DB
                     del st.session_state['user_id']  # Clear session
                     st.success("Votre compte a été supprimé avec succès. Redirection vers la page d'accueil...")
                     st.session_state.current_page = "Connexion"
