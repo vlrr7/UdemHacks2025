@@ -45,6 +45,7 @@ def update_session_state():
     if latest_entry:
         st.session_state['age'] = latest_entry.age
         st.session_state['height'] = latest_entry.height
+        print(latest_entry.height)
     else:
         st.session_state['age'] = 0
         st.session_state['height'] = 50
