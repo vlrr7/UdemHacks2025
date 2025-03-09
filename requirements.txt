@@ -7,3 +7,4 @@ matplotlib
 pandas
 bcrypt
 Werkzeug
+streamlit-autorefresh
