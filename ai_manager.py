@@ -18,7 +18,7 @@ def generate_content(data):
         Recommandations particulieres: (Conseils à suivre plus précis et détaillé. Exemples : un plan d'entrainement complet pour une semaine ou un mois, ou changer les repas / les boissons, comment gerer le temps de sommeil, etc. Ne choisi que la plus pertinente !)
 
 
-        Don't say anything else. Answer in French.
+        Don't say anything else. Use bullet points if possible. Answer in French.
     """
     )
     print(response.text)
