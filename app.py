@@ -7,7 +7,7 @@ import pandas as pd
 import json
 
 def main():
-    st.title("Application HealthPro")
+    st.title("Connectez vous à HealthPro!")
     menu = ["Connexion", "Inscription", "Collecte des Données",
             "Analyse", "Social", "Gemini Predictions", "Paramètres"]
     # Configuration du menu latéral toujours ouvert
