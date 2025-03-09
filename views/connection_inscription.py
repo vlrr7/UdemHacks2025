@@ -25,7 +25,7 @@ def display_connection_page():
     st.header("Connexion",  )
     
     # Apply the fade-in class to the content
-    st.markdown("<div class='fade-in'>", unsafe_allow_html=True)
+    st.write("<div class='fade-in'>", unsafe_allow_html=True)
     username = st.text_input("Nom d'utilisateur")
     password = st.text_input("Mot de passe", type="password")
     if st.button("Se connecter"):
@@ -35,7 +35,7 @@ def display_connection_page():
             st.session_state['user_id'] = user.id
         else:
             st.error("Identifiants incorrects")
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.write("</div>", unsafe_allow_html=True)
 
 
 def display_inscription_page():

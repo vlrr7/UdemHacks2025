@@ -1,20 +1,19 @@
-let watchId = null;
-
-function startTracking() {
+// static/gps.js
+function updateGeolocation() {
     if (!navigator.geolocation) {
-        alert("La géolocalisation n'est pas supportée par ce navigateur.");
+        console.error("La géolocalisation n'est pas supportée par ce navigateur.");
         return;
     }
-    
-    watchId = navigator.geolocation.watchPosition(
-        position => {
+    navigator.geolocation.watchPosition(
+        function(position) {
             const params = new URLSearchParams(window.location.search);
             params.set('lat', position.coords.latitude);
             params.set('lon', position.coords.longitude);
             window.history.replaceState({}, '', `${location.pathname}?${params}`);
+            console.log("Position mise à jour:", position.coords);
         },
-        error => {
-            console.error('Erreur de géolocalisation:', error);
+        function(error) {
+            console.error("Erreur de géolocalisation:", error);
         },
         {
             enableHighAccuracy: true,
@@ -23,11 +22,4 @@ function startTracking() {
         }
     );
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    document.body.addEventListener('click', (event) => {
-        if (event.target.id === 'demarrer-course') {
-            startTracking();
-        }
-    });
-});
+document.addEventListener('DOMContentLoaded', updateGeolocation);

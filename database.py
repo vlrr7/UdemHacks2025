@@ -1,10 +1,25 @@
+# database.py
 import datetime
 from bson.objectid import ObjectId
 import pymongo
 from werkzeug.security import generate_password_hash, check_password_hash
 import streamlit as st
 
+# -------------------------------------------------------------------------------
+# 1. CONNEXION À MONGODB ATLAS
+# -------------------------------------------------------------------------------
+MONGO_URI = f"mongodb+srv://dbUser:{st.secrets['MONGO_DB_PASSWORD']}@healthprodb.eptzn.mongodb.net/?retryWrites=true&w=majority&appName=healthprodb"
+client = pymongo.MongoClient(MONGO_URI)
+db = client["healthpro"]
 
+# Collections (équivalent des tables SQL)
+users_collection = db["users"]
+data_entries_collection = db["data_entries"]
+follows_collection = db["follows"]
+
+# -------------------------------------------------------------------------------
+# Fonctions d'authentification
+# -------------------------------------------------------------------------------
 def login(username, password):
     user_data = users_collection.find_one({"username": username})
     if not user_data or not check_password_hash(user_data['password'], password):
@@ -14,51 +29,36 @@ def login(username, password):
 def register(username, password, email):
     if users_collection.find_one({"$or": [{"username": username}, {"email": email}]}):
         return None, "Username or email already exists"
-    
     hashed_pw = generate_password_hash(password)
     user = User(username=username, password=hashed_pw, email=email)
     user.save()
     return user, "Registration successful"
 
 def update_session_state():
-    user_id = st.session_state['user_id']
-
-    # Fetch the latest data entry for the user
+    user_id = st.session_state.get('user_id')
+    if not user_id:
+        return
+    # Récupérer la dernière saisie de l'utilisateur
     entries = DataEntry.find_by_user_id(user_id)
-    latest_entry = entries[-1] if entries else None
+    latest_entry = entries[0] if entries else None
 
-    # Initialize session state for persistent fields
     if latest_entry:
         st.session_state['age'] = latest_entry.age
         st.session_state['height'] = latest_entry.height
-        print(latest_entry.height)
     else:
         st.session_state['age'] = 0
         st.session_state['height'] = 50
 
     try:
-        if (latest_entry):
+        if latest_entry:
             st.session_state['sexe_index'] = ["Homme", "Femme"].index(latest_entry.sexe)
         else:
             st.session_state['sexe_index'] = 0
     except ValueError:
         st.session_state['sexe_index'] = 0
 
-
 # -------------------------------------------------------------------------------
-# 1. CONNEXION À MONGODB ATLAS
-# -------------------------------------------------------------------------------
-MONGO_URI = f"mongodb+srv://dbUser:{st.secrets["MONGO_DB_PASSWORD"]}@healthprodb.eptzn.mongodb.net/?retryWrites=true&w=majority&appName=healthprodb"
-client = pymongo.MongoClient(MONGO_URI)
-db = client["healthpro"]  # Nom de la base de données (à modifier si nécessaire)
-
-# Collections (équivalent des tables en SQL)
-users_collection = db["users"]
-data_entries_collection = db["data_entries"]
-follows_collection = db["follows"]
-
-# -------------------------------------------------------------------------------
-# 2. CLASSE USER (remplace le modèle SQLAlchemy "User")
+# CLASSE USER
 # -------------------------------------------------------------------------------
 class User:
     def __init__(self, username, password, email, created_at=None, _id=None, age=25, sexe='M', weight=70, height=175):
@@ -97,57 +97,43 @@ class User:
 
     @staticmethod
     def update_password(user_id, old_password, new_password):
-        """Updates the user's password if the old password matches."""
         user_data = users_collection.find_one({"_id": ObjectId(user_id)})
         if not user_data or not check_password_hash(user_data["password"], old_password):
-            return False  # Incorrect old password
-
-        # Hash the new password
+            return False  # Ancien mot de passe incorrect
         hashed_new_password = generate_password_hash(new_password)
-
-        # Update the password in MongoDB
         users_collection.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": {"password": hashed_new_password}}
         )
-        return True  # Password updated successfully
-
+        return True
 
 # -------------------------------------------------------------------------------
-# 2. CLASSE DATAENTRY (version modifiée)
+# CLASSE DATAENTRY
 # -------------------------------------------------------------------------------
 class DataEntry:
     def __init__(self, user_id, date, age, sexe, height, weight, bmi, water, calories, sleep, activity_time, timed_up_and_go_test, amsler, hearing, _id=None):
         self._id = _id
         self.user_id = user_id
-        
         self.date = date or datetime.datetime.utcnow()
-        
-        # Nouveaux champs généraux
         self.age = age
         self.sexe = sexe
-        self.height = height  # Taille en cm
-        self.weight = weight  # Poids en kg
-        self.bmi = bmi  # Calculé automatiquement
-        
-        # Données quotidiennes
-        self.water = water  # Eau en litres
-        self.calories = calories  # Calories consommées
-        self.sleep = sleep  # Heures de sommeil
-        self.activity_time = activity_time  # Temps d'activité en min
-        
-        # Données pour seniors (optionnelles)
-        self.timed_up_and_go_test = timed_up_and_go_test  # Test timed_up_and_go_test en secondes
-        self.amsler = amsler  # Résultat Amsler
-        self.hearing = hearing  # Résultat auditif
-
+        self.height = height
+        self.weight = weight
+        self.bmi = bmi
+        self.water = water
+        self.calories = calories
+        self.sleep = sleep
+        self.activity_time = activity_time
+        self.timed_up_and_go_test = timed_up_and_go_test
+        self.amsler = amsler
+        self.hearing = hearing
 
     def save(self):
         doc = {
             "user_id": self.user_id,
             "date": self.date,
             "age": self.age,
-            "sexe":self.sexe,
+            "sexe": self.sexe,
             "height": self.height,
             "weight": self.weight,
             "bmi": self.bmi,
@@ -188,8 +174,9 @@ class DataEntry:
                 _id=doc["_id"],
             ))
         return entries
+
 # -------------------------------------------------------------------------------
-# 3. CLASSE FOLLOW (remplace le modèle SQLAlchemy "Follow")
+# CLASSE FOLLOW
 # -------------------------------------------------------------------------------
 class Follow:
     def __init__(self, follower_id, followed_id, _id=None):
@@ -198,7 +185,6 @@ class Follow:
         self.followed_id = followed_id
 
     def save(self):
-        """Insère ou met à jour ce document de suivi dans MongoDB."""
         doc = {
             "follower_id": self.follower_id,
             "followed_id": self.followed_id
@@ -241,4 +227,3 @@ class Follow:
             "follower_id": follower_id,
             "followed_id": followed_id
         })
-    
