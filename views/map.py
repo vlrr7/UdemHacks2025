@@ -127,38 +127,42 @@ def display_map_page():
         st.session_state.elapsed = elapsed
 
         geo = get_geolocation()
-        print(str(geo))
         st.info(str(geo))
         if geo and geo["coords"]:
             new_position = [geo["coords"]["latitude"], geo["coords"]["longitude"]]
-    else:
-        new_position = [48.8566, 2.3522]
-        st.info("🔍 Recherche du signal GPS...")
+        else:
+            new_position = [48.8566, 2.3522]
+            st.info("🔍 Recherche du signal GPS...")
 
-    # Calcule la vitesse réelle si une position précédente existe
-    current_timestamp = datetime.now()
-    if st.session_state.run_data['positions']:
-        previous_position = st.session_state.run_data['positions'][-1]
-        previous_timestamp = st.session_state.run_data['timestamps'][-1]
-        time_diff = (current_timestamp - previous_timestamp).total_seconds()
-        if time_diff > 0:
-            distance = haversine_distance(previous_position, new_position)  # en mètres
-            speed = (distance / time_diff) * 3.6  # conversion m/s en km/h
+        # Calcule de la vitesse réelle si une position précédente existe
+        current_timestamp = datetime.now()
+        if st.session_state.run_data['positions']:
+            previous_position = st.session_state.run_data['positions'][-1]
+            previous_timestamp = st.session_state.run_data['timestamps'][-1]
+            time_diff = (current_timestamp - previous_timestamp).total_seconds()
+            if time_diff > 0:
+                distance = haversine_distance(previous_position, new_position)  # en mètres
+                speed = (distance / time_diff) * 3.6  # conversion m/s en km/h
+            else:
+                speed = 0
         else:
             speed = 0
-    else:
-        speed = 0
 
-    new_data = {
+        new_data = {
         'timestamp': current_timestamp,
         'speed': speed,
         'heart_rate': np.random.randint(120, 190),
         'position': new_position
-    }
-    st.session_state.run_data['timestamps'].append(new_data['timestamp'])
-    st.session_state.run_data['speeds'].append(new_data['speed'])
-    st.session_state.run_data['heart_rates'].append(new_data['heart_rate'])
-    st.session_state.run_data['positions'].append(new_data['position'])
+        }
+        st.session_state.run_data['timestamps'].append(new_data['timestamp'])
+        st.session_state.run_data['speeds'].append(new_data['speed'])
+        st.session_state.run_data['heart_rates'].append(new_data['heart_rate'])
+        st.session_state.run_data['positions'].append(new_data['position'])
+
+    else:
+        # Si la course est arrêtée, on n'actualise pas les données de course.
+        st.info("La course est arrêtée. Appuyez sur '🚩 Démarrer la course' pour actualiser les données GPS.")
+
         
     current_speed = st.session_state.run_data['speeds'][-1] if st.session_state.run_data['speeds'] else 0
     current_hr = st.session_state.run_data['heart_rates'][-1] if st.session_state.run_data['heart_rates'] else 0
