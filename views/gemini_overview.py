@@ -6,12 +6,12 @@ def display_gemini_overview_page():
     st.title("HealthPro")
     st.header("Analyse et Recommandations à l'aide de Gemini.")
     if 'user_id' not in st.session_state:
-        st.error("Veuillez vous connecter pour accéder aux prédictions.")
+        st.error("Veuillez vous connecter pour accéder à l'analyse de l'intelligence artificielle.")
     else:
         user_id = st.session_state['user_id']
         entries = DataEntry.find_by_user_id(user_id)
         if not entries:
-            st.warning("Aucune donnée disponible pour générer une prédiction.")
+            st.warning("Aucune donnée disponible pour générer une analyse intelligente.")
         else:
             avg_age = entries[-1].age if entries else 0
             avg_height = entries[-1].height if entries else 0
@@ -35,7 +35,7 @@ def display_gemini_overview_page():
             }
             # st.write(str(user_data))
             prediction = generate_content(user_data)
-            st.subheader("Résultat de la prédiction")
+            st.subheader("Résultat de l'analyse")
             response_lines = prediction.split('\n')
             for line in response_lines:
                 st.write(line)
