@@ -1,10 +1,4 @@
-from ai_manager import gemini_predict  # Assurez-vous que ces fonctions sont définies
-from database import User, DataEntry, Follow, register, login
 import streamlit as st
-import datetime
-import matplotlib.pyplot as plt
-import pandas as pd
-import json
 
 from views.connection_inscription import display_connection_page, display_inscription_page
 from views.data_collection import display_data_collection_page

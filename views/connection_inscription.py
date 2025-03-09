@@ -1,4 +1,4 @@
-from streamlit import st
+import streamlit as st
 from database import login, register
 
 def display_connection_page():
