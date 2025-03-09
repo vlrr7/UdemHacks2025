@@ -39,32 +39,24 @@ def display_analysis_page():
             df = pd.DataFrame(data)
             st.dataframe(df)
 
-            # Configuration des colonnes pour les boutons
-            col1, col2, col3 = st.columns(3)
+            # Configuration des colonnes pour le selecteur et le bouton
+            col1, col2 = st.columns(2)
 
-            # Création des boutons
+            # Liste des options de graphes
+            graph_options = ["Taille", "Poids", "IMC", "Eau", "Calories", "Sommeil", "Activité", "TUG", "Audition"]
+
+            # Selecteur de graphe
             with col1:
-                if st.button("Taille"):
-                    st.session_state.graph = "Taille"
-                if st.button("Poids"):
-                    st.session_state.graph = "Poids"
-                if st.button("IMC"):
-                    st.session_state.graph = "IMC"
+                selected_graph = st.selectbox("Sélectionner un graphe", options=graph_options, key="selected_graph")
+
+            # Bouton pour afficher/supprimer le graphe
             with col2:
-                if st.button("Eau"):
-                    st.session_state.graph = "Eau"
-                if st.button("Calories"):
-                    st.session_state.graph = "Calories"
-                if st.button("Sommeil"):
-                    st.session_state.graph = "Sommeil"
-                    
-            with col3:
-                if st.button("Activité"):
-                    st.session_state.graph = "Activité"
-                if st.button("TUG"):
-                    st.session_state.graph = "TUG"
-                if st.button("Audition"):
-                    st.session_state.graph = "Audition"
+                if 'graph' in st.session_state and st.session_state.graph == selected_graph:
+                    if st.button(f"Supprimer {selected_graph}"):
+                        del st.session_state.graph
+                else:
+                    if st.button(f"Afficher {selected_graph}"):
+                        st.session_state.graph = selected_graph
 
             # Zone fixe pour les graphiques
             graph_placeholder = st.empty()
