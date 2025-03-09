@@ -39,8 +39,10 @@ def display_analysis_page():
             df = pd.DataFrame(data)
             st.dataframe(df)
 
+            st.markdown("---")
+
             # Configuration des colonnes pour le selecteur et le bouton
-            col1, col2 = st.columns(2)
+            col1, col2 = st.columns([3, 1])
 
             # Liste des options de graphes
             graph_options = ["Taille", "Poids", "IMC", "Eau", "Calories", "Sommeil", "Activité", "TUG", "Audition"]
@@ -54,9 +56,13 @@ def display_analysis_page():
                 if 'graph' in st.session_state and st.session_state.graph == selected_graph:
                     if st.button(f"Supprimer {selected_graph}"):
                         del st.session_state.graph
+                        st.rerun()
                 else:
                     if st.button(f"Afficher {selected_graph}"):
                         st.session_state.graph = selected_graph
+                        st.rerun()
+
+            st.markdown("---")
 
             # Zone fixe pour les graphiques
             graph_placeholder = st.empty()
@@ -64,7 +70,7 @@ def display_analysis_page():
              # Affichage conditionnel des graphiques
             if 'graph' in st.session_state:
                 fig, ax = plt.subplots(figsize=(8, 4))
-                
+
                 # Mapping des colonnes
                 column_map = {
                     "Taille": "Taille (cm)",
@@ -77,9 +83,9 @@ def display_analysis_page():
                     "TUG": "TUG (sec)",
                     "Audition": "Audition"
                 }
-                
+
                 column = column_map[st.session_state.graph]
-                
+
                 # Création du graphique
                 ax.plot(df["date"], df[column], marker='o', linestyle='-')
                 ax.set_title(f"Évolution de {st.session_state.graph}")
@@ -87,16 +93,17 @@ def display_analysis_page():
                 ax.set_ylabel(column)
                 plt.xticks(rotation=45)
                 plt.tight_layout()
-                
+
                 # Affichage dans la zone réservée
                 with graph_placeholder.container():
                     st.pyplot(fig)
-                
+
                 # Nettoyage après affichage
                 plt.close(fig)
 
 
 
+    st.markdown("---")
     # Saisie des critères
     update_session_state()
     age = st.number_input("Âge (ans)", min_value=0, max_value=150, value=st.session_state['age'])
