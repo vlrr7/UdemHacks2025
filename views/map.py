@@ -6,27 +6,31 @@ import math
 import pydeck as pdk
 import datetime
 import pandas as pd
-from streamlit_autorefresh import st_autorefresh
 
-# Fonction de calcul de la distance (en mètres) entre deux points via la formule haversine
+from streamlit_autorefresh import st_autorefresh
+from streamlit_bokeh_events import streamlit_bokeh_events
+from bokeh.models.widgets import Button
+from bokeh.models import CustomJS
+
+# Fonction haversine pour calculer la distance entre deux points
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371e3  # Rayon de la Terre en mètres
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
     dphi = math.radians(lat2 - lat1)
     dlambda = math.radians(lon2 - lon1)
-    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    a = math.sin(dphi/2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return R * c
 
 def display_map_page():
-    st.title("Course en Temps Réel")
+    st.title("Activité de Course - Suivi en Temps Réel")
 
-    # Vérification de la connexion utilisateur
+    # Vérifier que l'utilisateur est connecté
     if 'user_id' not in st.session_state:
         st.error("Veuillez vous connecter pour accéder à la carte.")
         return
 
-    # Initialisations dans st.session_state
+    # Initialisation des variables dans st.session_state
     if 'running' not in st.session_state:
         st.session_state.running = False
     if 'start_time' not in st.session_state:
@@ -34,66 +38,94 @@ def display_map_page():
     if 'trajectory' not in st.session_state:
         st.session_state.trajectory = []  # Liste des points {lat, lon, timestamp}
     if 'speeds' not in st.session_state:
-        st.session_state.speeds = []      # Liste des tuples (timestamp, speed_kmh)
+        st.session_state.speeds = []       # Liste des tuples (timestamp, speed_kmh)
+    if 'last_timestamp' not in st.session_state:
+        st.session_state.last_timestamp = 0.0
+    if 'current_location' not in st.session_state:
+        st.session_state.current_location = None  # {lat, lon}
 
-    # Affichage de la géolocalisation en temps réel via get_position
-    location = None # get_position("Veuillez autoriser l'accès à votre localisation")
-    if location is None:
-        st.warning("En attente de la localisation...")
-        return  # On quitte tant qu'on n'a pas la position
-    else:
-        current_lat = location.get("latitude")
-        current_lon = location.get("longitude")
-        st.write(f"Votre position actuelle : {current_lat:.6f}, {current_lon:.6f}")
-
-    # Boutons pour démarrer/arrêter la course
+    # Utilisation de streamlit-bokeh-events pour demander la géolocalisation
+    st.markdown("### Obtenir votre localisation")
+    loc_button = Button(label="Obtenir ma localisation")
+    loc_button.js_on_event("button_click", CustomJS(code="""
+        navigator.geolocation.getCurrentPosition(
+            (loc) => {
+                document.dispatchEvent(new CustomEvent("GET_LOCATION", {detail: {lat: loc.coords.latitude, lon: loc.coords.longitude}}))
+            },
+            (err) => {
+                document.dispatchEvent(new CustomEvent("GET_LOCATION", {detail: {error: err.message}}))
+            }
+        )
+        """))
+    result = streamlit_bokeh_events(
+        loc_button,
+        events="GET_LOCATION",
+        key="get_location",
+        refresh_on_update=False,
+        override_height=75,
+        debounce_time=0)
+    
+    # Si une erreur est renvoyée par le navigateur
+    if result and "event" in result:
+        if "error" in result["event"]:
+            st.error(f"Erreur de géolocalisation: {result['event']['error']}")
+        else:
+            # Mise à jour de la position actuelle
+            st.session_state.current_location = {
+                "lat": result["event"]["lat"],
+                "lon": result["event"]["lon"]
+            }
+            st.write(f"Position obtenue: {st.session_state.current_location['lat']:.6f}, {st.session_state.current_location['lon']:.6f}")
+    
+    # Boutons de contrôle de la course
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Commencer", disabled=st.session_state.running):
-            st.session_state.running = True
-            st.session_state.start_time = time.time()
-            st.session_state.trajectory = [{"lat": current_lat, "lon": current_lon, "timestamp": time.time()}]
-            st.session_state.speeds = [(time.time(), 0.0)]
+            if st.session_state.current_location is None:
+                st.error("La localisation n'est pas disponible. Veuillez cliquer sur 'Obtenir ma localisation'.")
+            else:
+                st.session_state.running = True
+                st.session_state.start_time = time.time()
+                st.session_state.last_timestamp = st.session_state.start_time
+                st.session_state.trajectory = [st.session_state.current_location.copy() | {"timestamp": st.session_state.start_time}]
+                st.session_state.speeds = [(st.session_state.start_time, 0.0)]
     with col2:
         if st.button("Arrêter", disabled=not st.session_state.running):
             st.session_state.running = False
 
-    # Rafraîchissement automatique de la page si la course est en cours (toutes les 2 secondes)
+    # Rafraîchissement automatique seulement si course en cours
     if st.session_state.running:
         st_autorefresh(interval=2000, limit=None, key="map_autorefresh")
 
-    # Mise à jour de la trajectoire et calcul de la vitesse
-    if st.session_state.running:
-        # Si la position a changé (vérifier que la nouvelle position diffère du dernier point)
+    # Mise à jour en temps réel de la trajectoire et de la vitesse
+    if st.session_state.running and st.session_state.current_location is not None:
+        new_lat = st.session_state.current_location["lat"]
+        new_lon = st.session_state.current_location["lon"]
+        now = time.time()
+        dt = now - st.session_state.last_timestamp
+        if dt < 0.1:
+            dt = 0.1  # Pour éviter la division par zéro
         last_point = st.session_state.trajectory[-1]
-        if abs(current_lat - last_point["lat"]) > 1e-6 or abs(current_lon - last_point["lon"]) > 1e-6:
-            now = time.time()
-            dt = now - last_point["timestamp"]
-            if dt <= 0:
-                dt = 1  # pour éviter la division par zéro
-            distance = haversine(last_point["lat"], last_point["lon"], current_lat, current_lon)
-            speed_m_s = distance / dt
-            speed_kmh = speed_m_s * 3.6
-            st.session_state.trajectory.append({"lat": current_lat, "lon": current_lon, "timestamp": now})
-            st.session_state.speeds.append((now, speed_kmh))
-        else:
-            speed_kmh = st.session_state.speeds[-1][1]  # Pas de changement, vitesse inchangée
+        distance = haversine(last_point["lat"], last_point["lon"], new_lat, new_lon)
+        speed_kmh = (distance / dt) * 3.6
+        st.session_state.trajectory.append({"lat": new_lat, "lon": new_lon, "timestamp": now})
+        st.session_state.speeds.append((now, speed_kmh))
+        st.session_state.last_timestamp = now
 
-    # Chronomètre
+    # Affichage du chronomètre
     if st.session_state.running:
         elapsed = time.time() - st.session_state.start_time
         m, s = divmod(int(elapsed), 60)
         st.write(f"**Temps écoulé :** {m:02d}:{s:02d}")
     else:
         if st.session_state.speeds:
-            total_time = st.session_state.speeds[-1][0] - st.session_state.start_time
-            m, s = divmod(int(total_time), 60)
+            total_sec = st.session_state.speeds[-1][0] - st.session_state.start_time
+            m, s = divmod(int(total_sec), 60)
             st.write(f"**Course terminée - Temps total :** {m:02d}:{s:02d}")
 
     # Affichage de la carte avec PyDeck
     if st.session_state.trajectory:
         df_points = pd.DataFrame(st.session_state.trajectory)
-        # Créer une liste de segments pour tracer la trajectoire
         line_data = []
         for i in range(len(df_points) - 1):
             p1 = df_points.iloc[i]
