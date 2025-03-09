@@ -7,16 +7,40 @@ def display_data_collection_page():
     st.header("Saisie de vos données quotidiennes")
     if 'user_id' not in st.session_state:
         st.error("Veuillez vous connecter pour saisir vos données.")
+        return  # Stop execution if not logged in
     else:
         user_id = st.session_state['user_id']
         unformatted_date = st.date_input("Date", datetime.date.today())
         date = datetime.datetime.combine(unformatted_date, datetime.datetime.min.time())
 
+        # --- ADD THESE LINES HERE ---
+        # Initialize session state for persistent fields
+        if 'age' not in st.session_state:
+            st.session_state['age'] = 0
+        if 'sexe' not in st.session_state:
+            st.session_state['sexe'] = "Homme / Femme"
+        if 'height' not in st.session_state:
+            st.session_state['height'] = 50
         # Données générales
         st.subheader("Informations générales")
-        age = st.number_input("Âge", min_value=0, step=1)
-        sexe = st.text_input("Sexe à la naissance", value = "Homme / Femme")
-        height = st.number_input("Taille (cm)", min_value=50, max_value=250, step=1)
+        age = st.number_input(
+            "Âge",
+            min_value=0,
+            step=1,
+            value=st.session_state['age']  # Pull value from session state
+        )
+
+        sexe = st.text_input(
+            "Sexe à la naissance",
+            value=st.session_state['sexe']  # Pull value from session state
+        )
+        height = st.number_input(
+            "Taille (cm)",
+            min_value=50,
+            max_value=250,
+            step=1,
+            value=st.session_state['height']  # Pull value from session state
+        )
         weight = st.number_input("Poids (kg)", min_value=20.0, max_value=200.0, step=0.1)
         bmi = weight / ((height / 100) ** 2) if height > 0 else 0
 
@@ -38,7 +62,7 @@ def display_data_collection_page():
                 user_id=user_id,
                 date=date,
                 age=age,
-                sexe = sexe,
+                sexe=sexe,
                 height=height,
                 weight=weight,
                 bmi=bmi,
@@ -49,6 +73,12 @@ def display_data_collection_page():
                 timed_up_and_go_test=tug,
                 amsler=amsler,
                 hearing=hearing
-            )
-            new_entry.save()
-            st.success("Données enregistrées avec succès!")
+        )
+        new_entry.save()
+        
+        # --- ADD THESE LINES ---
+        st.session_state['age'] = age    # Save to session state
+        st.session_state['sexe'] = sexe
+        st.session_state['height'] = height
+        
+        st.success("Données enregistrées avec succès!")

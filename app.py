@@ -11,7 +11,7 @@ from views.normes import display_normes_page
 
 def main():
     menu = ["Connexion", "Inscription", "Collecte des Données",
-            "Analyse", "Social", "Normes", "Gemini Predictions", "Paramètres"]
+            "Analyse", "Social", "Normes", "Map", "Gemini Predictions", "Paramètres"]
     # Configuration du menu latéral toujours ouvert
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "Connexion"
@@ -45,6 +45,10 @@ def main():
 
     elif st.session_state.current_page == "Normes":
         display_normes_page()
+
+    elif st.session_state.current_page == "Map":
+        display_map_page()
+
 
     # ----- Prédictions Gemini -----
     elif st.session_state.current_page == "Gemini Predictions":
