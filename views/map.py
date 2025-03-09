@@ -102,8 +102,7 @@ def display_map_page():
     if st.session_state.run_start:
         elapsed = time.time() - st.session_state.run_start
         st.session_state.elapsed = elapsed
-        st.rerun(minutes=0.02)
-
+        
         query_params = st.experimental_get_query_params()
         try:
             lat = float(query_params.get('lat', [48.8566])[0])
