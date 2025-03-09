@@ -189,7 +189,7 @@ def display_map_page():
 
 
         st.pydeck_chart(pdk.Deck(
-    map_style="https://tiles.stadiamaps.com/styles/osm_bright.json",  # Utilisation d'OpenStreetMap, sans clé API Mapbox
+    map_style="https://tiles.stadiamaps.com/styles/alidade_smooth.json",  # Utilisation d'OpenStreetMap, sans clé API Mapbox
     initial_view_state=pdk.ViewState(
         latitude=latest_lat,  # Centrer la vue sur la dernière position
         longitude=latest_lon,
