@@ -48,7 +48,7 @@ def display_parameters_page():
 
             # --- Changer les informations personnelles ---
             st.subheader("👤 Modifier les informations générales")
-            new_username = st.text_input("Nouveau nom d'utilisateur", value=user.username)
+            new_username = st.text_input("Nouveau nom d'utilisateur", value=user["username"])
             new_age = st.number_input("Âge", min_value=0, step=1, value=user.age)
             new_height = st.number_input("Taille (cm)", min_value=50, max_value=250, step=1, value=user.height)
             new_weight = st.number_input("Poids (kg)", min_value=20.0, max_value=200.0, step=0.1, value=user.weight)

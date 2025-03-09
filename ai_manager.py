@@ -1,36 +1,27 @@
 from google import genai
 import streamlit as st
 
-
-api_key = "test" # st.secrets["GEMINI_API_KEY"]
-# -----------------------------
-# Fonction de simulation d'appel à l'API Gemini
-# -----------------------------
-
+# Configure the API key globally
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
 def gemini_predict(data):
     """
-    Cette fonction simule un appel à l'API Gemini.
-    Pour une intégration réelle, utilisez requests pour envoyer vos données à l'API.
+    Calls Google Gemini API to predict risk level, potential conditions, and recommendations.
     """
-    # Ici, nous retournons une réponse fictive :
-    client = genai.Client(api_key=st.secrets.GEMINI_API_KEY)
-    response = client.models.generate_content(
-        model="gemini-2.0-flash", contents= f"""{str(data)}. These are the user's data for an application that tracks
-        what a routine and health conditions and is able to predict his risk level of found conditions.
-       Réponds uniquement avec les résultats demandés, sans aucun texte avant ou après la réponse. 
-        Formate la réponse exactement comme ceci :
+    model = genai.GenerativeModel("gemini-1.5-flash")  # Ensure you use the correct model version
+    response = model.generate_content(f"""{str(data)}. These are the user's data for an application that tracks
+        their routine and health conditions and predicts their risk level for potential conditions.
+        
+        Réponds uniquement avec les résultats demandés, sans aucun texte avant ou après la réponse. 
+        Formate la réponse exactement comme ceci (Attention aux fautes de frappe, et aux retour à la ligne):
+        
+        Niveau de risque: (Faible, Modéré, Élevé)
+        Conditions potentiels: (Liste des conditions possibles)
+        Recommandations: (Conseils à suivre)
+        
+        Ne dis rien d'autre.
+    """)
 
-Niveau de risque: (Faible, Modéré, Élevé)
-Conditions potentiels: (Liste des conditions possibles)
-Recommandations: (Conseils à suivre)
+    # Extract the response text correctly
+    return response.text if response and hasattr(response, 'text') else "Erreur: Réponse invalide"
 
-Ne dis rien d'autre.""")
-    return response.text
-
-    # prediction = {
-    #     "risk_level": "Faible",
-    #     "potential_conditions": ["Aucune anomalie détectée"],
-    #     "recommendations": "Continuez à suivre un régime équilibré et à pratiquer une activité physique régulière."
-    # }
-    # return prediction

@@ -111,8 +111,6 @@ class DataEntry:
         self.timed_up_and_go_test = timed_up_and_go_test  # Test timed_up_and_go_test en secondes
         self.amsler = amsler  # Résultat Amsler
         self.hearing = hearing  # Résultat auditif
-        
-        
 
 
     def save(self):
