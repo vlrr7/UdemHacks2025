@@ -10,4 +10,5 @@ Werkzeug
 streamlit-autorefresh
 streamlit-geolocation
 streamlit-bokeh-events
-streamlit-javascript
+streamlit_javascript
+streamlit-js-eval

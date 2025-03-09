@@ -8,6 +8,11 @@ import pydeck as pdk
 from streamlit_autorefresh import st_autorefresh
 from database import User
 from streamlit_javascript import st_javascript  # Nouvelle librairie pour exécuter du JS
+import time
+from streamlit_js_eval import get_geolocation
+
+# Update refresh rate to 1 second for better real-time feel
+st_autorefresh(interval=1000, key="maprefresh")
 
 def calculate_target_heart_rate(age):
     max_hr = 220 - age
@@ -17,39 +22,40 @@ def calculate_target_heart_rate(age):
         'modéré': 0.70 * max_hr
     }
 
-def get_geolocation():
-    # Code JavaScript asynchrone pour récupérer la position
-    js_code = """
-    async function getLocation() {
-      return new Promise((resolve, reject) => {
-          if (navigator.geolocation) {
-              navigator.geolocation.getCurrentPosition(
-                  (position) => {
-                      resolve({lat: position.coords.latitude, lon: position.coords.longitude});
-                  },
-                  (error) => {
-                      reject("Erreur de géolocalisation: " + error.message);
-                  }
-              );
-          } else {
-              reject("La géolocalisation n'est pas supportée par ce navigateur.");
-          }
-      });
-    }
-    getLocation();
-    """
-    try:
-        result = st_javascript(js_code, key="geolocation")
-        return result  # Doit être un dictionnaire avec keys "lat" et "lon"
-    except Exception as e:
-        st.error("Erreur lors de la récupération de la géolocalisation: " + str(e))
-        return None
+# Replace your existing `get_geolocation` function with this:
+# def get_geolocation():
+#     handle_geolocation_message()  # This updates st.session_state.geolocation_result
+#     geo = st.session_state.get("geolocation_result", None)
+#     print(geo)
+#     return geo
+
+
+# Add this to capture JS messages
+def handle_geolocation_message():
+    # Generate a unique key using timestamp
+    unique_key = f"geolocation_async_{time.time()}"
+    
+    result = st_javascript("""
+    new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+            position => resolve({
+                lat: position.coords.latitude,
+                lon: position.coords.longitude
+            }),
+            error => reject(error.message)
+        );
+    })
+    """, key=unique_key)  # Use dynamic key here
+    print("result : " + str(result))
+    if result and "lat" in result:
+        st.session_state.geolocation_result = (result["lat"], result["lon"])
+    elif result and "error" in result:
+        st.error(f"Geolocation Error: {result['error']}")
 
 def display_map_page():
-    st.title("🏃 Running Tracker")
-    
-    # Auto-refresh toutes les 5 secondes pour simuler une mise à jour en temps réel
-    st_autorefresh(interval=5000, key="datarefresh")
+    handle_geolocation_message()  # <-- Add this line
+
+    st.title("🏃 Running Tracker")    
     
     # Vérifier que l'utilisateur est connecté
     if 'user_id' not in st.session_state:
@@ -99,8 +105,9 @@ def display_map_page():
         st.session_state.elapsed = elapsed
 
         geo = get_geolocation()
-        if geo and "lat" in geo and "lon" in geo:
-            new_position = [geo["lat"], geo["lon"]]
+        print(str(geo))
+        if geo and geo["coords"]:
+            new_position = [geo["coords"]["latitude"], geo["coords"]["longitude"]]
         else:
             new_position = [48.8566, 2.3522]
             st.info("🔍 Recherche du signal GPS...")
@@ -126,26 +133,38 @@ def display_map_page():
         cols[2].metric("💓 FC Actuelle", f"{current_hr} bpm")
         cols[3].metric("🎯 Cible FC", f"{heart_rates[target_type.lower()]:.0f} bpm")
         
+    # Replace your existing pydeck chart code with this:
     if st.session_state.run_data['positions']:
-        df = pd.DataFrame({
-            'lat': [pos[0] for pos in st.session_state.run_data['positions']],
-            'lon': [pos[1] for pos in st.session_state.run_data['positions']]
-        })
+        latest_lat = st.session_state.run_data['positions'][-1][0]
+        latest_lon = st.session_state.run_data['positions'][-1][1]
+        
         st.pydeck_chart(pdk.Deck(
             map_style='mapbox://styles/mapbox/outdoors-v11',
             initial_view_state=pdk.ViewState(
-                latitude=df['lat'].mean(),
-                longitude=df['lon'].mean(),
-                zoom=14,
+                latitude=latest_lat,  # Focus on latest position
+                longitude=latest_lon,
+                zoom=16,  # Closer zoom for real-time tracking
                 pitch=50
             ),
             layers=[
                 pdk.Layer(
                     'ScatterplotLayer',
-                    data=df,
+                    data=pd.DataFrame({
+                        'lat': [latest_lat],
+                        'lon': [latest_lon]
+                    }),
                     get_position='[lon, lat]',
-                    get_color='[200, 30, 0, 160]',
-                    get_radius=20,
+                    get_color='[0, 128, 255, 200]',  # Blue dot for current position
+                    get_radius=25,
+                ),
+                pdk.Layer(
+                    'PathLayer',
+                    data=pd.DataFrame({
+                        'path': [st.session_state.run_data['positions']]
+                    }),
+                    get_path='path',
+                    get_color='[255, 0, 0, 150]',  # Red line for path
+                    get_width=5,
                 )
             ]
         ))
