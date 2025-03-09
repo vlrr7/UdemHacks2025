@@ -108,6 +108,7 @@ def display_map_page():
         print(str(geo))
         if geo and geo["coords"]:
             new_position = [geo["coords"]["latitude"], geo["coords"]["longitude"]]
+            st.info(str(geo))
         else:
             new_position = [48.8566, 2.3522]
             st.info("🔍 Recherche du signal GPS...")
