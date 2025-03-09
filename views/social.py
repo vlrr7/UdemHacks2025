@@ -142,8 +142,8 @@ def display_social_page():
                         if st.button("Comparer avec mes statistiques"):
                             my_entries = DataEntry.find_by_user_id(user_id)
                             if my_entries:
-                                my_avg_age = sum(e.age for e in my_entries) / len(my_entries) if my_entries else 0
-                                my_avg_height = sum(e.height for e in my_entries) / len(my_entries) if my_entries else 0
+                                my_avg_age = entries[-1].age if entries else 0
+                                my_avg_height = entries[-1].height if entries else 0
                                 my_avg_weight = sum(e.weight for e in my_entries) / len(my_entries) if my_entries else 0
                                 my_avg_bmi = sum(e.bmi for e in my_entries) / len(my_entries) if my_entries else 0
                                 my_avg_water = sum(e.water for e in my_entries) / len(my_entries) if my_entries else 0
