@@ -90,8 +90,10 @@ class User:
 # -------------------------------------------------------------------------------
 class DataEntry:
     def __init__(self, user_id, date, age, height, weight, bmi, water, calories, sleep, activity_time, timed_up_and_go_test, amsler, hearing, _id=None):
-        self.user_id = ObjectId(user_id) if isinstance(user_id, str) else user_id
-        self.date = date
+        self._id = _id
+        self.user_id = user_id
+        
+        self.date = date or datetime.datetime.utcnow()
         
         # Nouveaux champs généraux
         self.age = age
@@ -110,7 +112,7 @@ class DataEntry:
         self.amsler = amsler  # Résultat Amsler
         self.hearing = hearing  # Résultat auditif
         
-        self._id = _id or ObjectId()
+        
 
 
     def save(self):
@@ -128,20 +130,16 @@ class DataEntry:
             "timed_up_and_go_test": self.timed_up_and_go_test,
             "amsler": self.amsler,
             "hearing": self.hearing,
-            "_id": None
         }
         if self._id:
             data_entries_collection.update_one({"_id": self._id}, {"$set": doc})
         else:
             result = data_entries_collection.insert_one(doc)
             self._id = result.inserted_id
-            print(f"DataEntry inserted with id: {self._id}")
-        print(f"DataEntry saved: {doc}")
-        return self._id
 
     @staticmethod
     def find_by_user_id(user_id):
-        docs = data_entries_collection.find({"user_id": ObjectId(user_id)}).sort("date", -1)
+        docs = data_entries_collection.find({"user_id": user_id}).sort("date", -1)
         entries = []
         for doc in docs:
             entries.append(DataEntry(
