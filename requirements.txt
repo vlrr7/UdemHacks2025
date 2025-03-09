@@ -1,5 +1,6 @@
 google-genai
 streamlit
+pydeck
 pymongo[srv]==4.6.2
 psycopg2-binary
 matplotlib
