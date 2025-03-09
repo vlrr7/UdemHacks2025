@@ -18,9 +18,9 @@ def calculate_target_heart_rate(age):
     }
 
 def display_map_page():
-    st.title("🏃 Running Tracker")
+    st.title("🏃♂️ Running Tracker")
 
-    # Rafraîchissement automatique toutes les 5 secondes pour simuler l'actualisation en temps réel
+    # Auto-refresh toutes les 5 secondes pour simuler une actualisation en temps réel
     st_autorefresh(interval=5000, key="datarefresh")
 
     # Injection d'un bouton HTML personnalisé et du code JavaScript associé
@@ -55,7 +55,7 @@ def display_map_page():
     </script>
     """, height=150)
 
-    # Vérifier que l'utilisateur est connecté
+    # Vérification de la connexion utilisateur
     if 'user_id' not in st.session_state:
         st.error("Veuillez vous connecter")
         return
@@ -70,7 +70,7 @@ def display_map_page():
 
     heart_rates = calculate_target_heart_rate(age)
 
-    # Initialisation des données de la course si elles n'existent pas
+    # Initialisation des données de la course
     if 'run_data' not in st.session_state:
         st.session_state.run_data = {
             'timestamps': [],
@@ -98,13 +98,13 @@ def display_map_page():
             }
             st.session_state.elapsed = 0
 
-    # Si la course est en cours, récupération des coordonnées GPS mises à jour via l'URL
+    # Mise à jour des données de localisation si la course est en cours
     if st.session_state.run_start:
         elapsed = time.time() - st.session_state.run_start
         st.session_state.elapsed = elapsed
 
-        # Utiliser st.experimental_get_query_params() pour récupérer les paramètres d'URL
-        query_params = st.experimental_get_query_params()
+        # Utilisation de la nouvelle API stable st.query_params (propriété, sans parenthèses)
+        query_params = st.query_params
         try:
             lat = float(query_params.get('lat', [48.8566])[0])
             lon = float(query_params.get('lon', [2.3522])[0])
