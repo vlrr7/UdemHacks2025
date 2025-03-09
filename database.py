@@ -89,28 +89,29 @@ class User:
 # 2. CLASSE DATAENTRY (version modifiée)
 # -------------------------------------------------------------------------------
 class DataEntry:
-    def __init__(self, user_id, **kwargs):
+    def __init__(self, user_id, date, age, height, weight, bmi, water, calories, sleep, activity_time, timed_up_and_go_test, amsler, hearing, _id=None):
         self.user_id = ObjectId(user_id) if isinstance(user_id, str) else user_id
-        self.date = kwargs.get('date') or datetime.datetime.utcnow()
+        self.date = date
         
         # Nouveaux champs généraux
-        self.age = kwargs.get('age', 0)
-        self.height = kwargs.get('height', 0)  # Taille en cm
-        self.weight = kwargs.get('weight', 0.0)  # Poids en kg
-        self.bmi = kwargs.get('bmi', 0.0)  # Calculé automatiquement
+        self.age = age
+        self.height = height  # Taille en cm
+        self.weight = weight  # Poids en kg
+        self.bmi = bmi  # Calculé automatiquement
         
         # Données quotidiennes
-        self.water = kwargs.get('water', 0.0)  # Eau en litres
-        self.calories = kwargs.get('calories', 0)  # Calories consommées
-        self.sleep = kwargs.get('sleep', 0.0)  # Heures de sommeil
-        self.activity_time = kwargs.get('activity_time', 0)  # Temps d'activité en min
+        self.water = water  # Eau en litres
+        self.calories = calories  # Calories consommées
+        self.sleep = sleep  # Heures de sommeil
+        self.activity_time = activity_time  # Temps d'activité en min
         
         # Données pour seniors (optionnelles)
-        self.timed_up_and_go_test = kwargs.get('timed_up_and_go_test', 0.0)  # Test timed_up_and_go_test en secondes
-        self.amsler = kwargs.get('amsler', "Normal")  # Résultat Amsler
-        self.hearing = kwargs.get('hearing', "Normal")  # Résultat auditif
+        self.timed_up_and_go_test = timed_up_and_go_test  # Test timed_up_and_go_test en secondes
+        self.amsler = amsler  # Résultat Amsler
+        self.hearing = hearing  # Résultat auditif
         
-        self._id = kwargs.get('_id', ObjectId())
+        self._id = _id or ObjectId()
+
 
     def save(self):
         doc = {
@@ -126,7 +127,8 @@ class DataEntry:
             "activity_time": self.activity_time,
             "timed_up_and_go_test": self.timed_up_and_go_test,
             "amsler": self.amsler,
-            "hearing": self.hearing
+            "hearing": self.hearing,
+            "_id": None
         }
         if self._id:
             data_entries_collection.update_one({"_id": self._id}, {"$set": doc})
@@ -135,6 +137,7 @@ class DataEntry:
             self._id = result.inserted_id
             print(f"DataEntry inserted with id: {self._id}")
         print(f"DataEntry saved: {doc}")
+        return self._id
 
     @staticmethod
     def find_by_user_id(user_id):
@@ -144,18 +147,18 @@ class DataEntry:
             entries.append(DataEntry(
                 user_id=doc["user_id"],
                 date=doc["date"],
-                age=doc.get("age", 0),
-                height=doc.get("height", 0),
-                weight=doc.get("weight", 0.0),
-                bmi=doc.get("bmi", 0.0),
-                water=doc.get("water", 0.0),
-                calories=doc.get("calories", 0),
-                sleep=doc.get("sleep", 0.0),
-                activity_time=doc.get("activity_time", 0),
-                timed_up_and_go_test=doc.get("timed_up_and_go_test", 0.0),
-                amsler=doc.get("amsler", "Normal"),
-                hearing=doc.get("hearing", "Normal"),
-                _id=doc["_id"]
+                age=doc["age"],
+                height=doc["height"],
+                weight=doc["weight"],
+                bmi=doc["bmi"],
+                water=doc["water"],
+                calories=doc["calories"],
+                sleep=doc["sleep"],
+                activity_time=doc["activity_time"],
+                timed_up_and_go_test=doc["timed_up_and_go_test"],
+                amsler=doc["amsler", "Normal"],
+                hearing=doc["hearing", "Normal"],
+                _id=doc["_id"],
             ))
         return entries
 # -------------------------------------------------------------------------------
