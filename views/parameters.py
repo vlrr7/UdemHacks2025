@@ -13,23 +13,31 @@ def display_parameters_page():
         if not user:
             st.error("Utilisateur introuvable.")
         else:
-            # --- Changer le mot de passe ---
+            
+           # --- Changer le mot de passe ---
             st.subheader("🔑 Changer le mot de passe")
+
+            # Input fields
             current_password = st.text_input("Mot de passe actuel", type="password")
             new_password = st.text_input("Nouveau mot de passe", type="password")
             confirm_password = st.text_input("Confirmer le nouveau mot de passe", type="password")
 
             if st.button("Mettre à jour le mot de passe"):
                 if new_password == confirm_password:
-                    success = user.update_password(current_password, new_password)  # Function to update password
-                    if success:
-                        st.success("Mot de passe mis à jour avec succès.")
+                    if 'user_id' in st.session_state:
+                        user_id = st.session_state['user_id']
+                        success = User.update_password(user_id, current_password, new_password)  # Static method call
+                        if success:
+                            st.success("Mot de passe mis à jour avec succès.")
+                        else:
+                            st.error("Mot de passe actuel incorrect.")
                     else:
-                        st.error("Mot de passe actuel incorrect.")
+                        st.error("Utilisateur non connecté. Veuillez vous reconnecter.")
                 else:
                     st.error("Les nouveaux mots de passe ne correspondent pas.")
 
             st.markdown("---")
+
 
             # --- Changer les informations personnelles ---
             st.subheader("👤 Modifier les informations générales")

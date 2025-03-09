@@ -42,7 +42,7 @@ def display_data_collection_page():
                 calories=calories,
                 sleep=sleep,
                 activity_time=activity_time,
-                tug=tug,
+                timed_up_and_go_test=tug,
                 amsler=amsler,
                 hearing=hearing
             )

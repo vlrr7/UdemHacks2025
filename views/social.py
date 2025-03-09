@@ -94,7 +94,7 @@ def display_social_page():
                                 <p>Calories : <strong>{entry.calories}</strong></p>
                                 <p>😴 Sommeil (h) : <strong>{entry.sleep}</strong></p>
                                 <p>Activité (min) : <strong>{entry.activity_time}</strong></p>
-                                <p>TUG (sec) : <strong>{entry.tug}</strong></p>
+                                <p>TUG (sec) : <strong>{entry.timed_up_and_go_test}</strong></p>
                                 <p>Amsler : <strong>{entry.amsler}</strong></p>
                                 <p>Audition : <strong>{entry.hearing}</strong></p>
                             </div>
@@ -108,7 +108,7 @@ def display_social_page():
                         avg_calories = sum(e.calories for e in entries) / len(entries) if entries else 0
                         avg_sleep = sum(e.sleep for e in entries) / len(entries) if entries else 0
                         avg_activity_time = sum(e.activity_time for e in entries) / len(entries) if entries else 0
-                        avg_tug = sum(e.tug for e in entries) / len(entries) if entries else 0
+                        avg_tug = sum(e.timed_up_and_go_test for e in entries) / len(entries) if entries else 0
                         st.session_state.friend_global = {
                             "Âge": avg_age,
                             "Taille": avg_height,
@@ -147,7 +147,7 @@ def display_social_page():
                                 my_avg_calories = sum(e.calories for e in my_entries) / len(my_entries) if my_entries else 0
                                 my_avg_sleep = sum(e.sleep for e in my_entries) / len(my_entries) if my_entries else 0
                                 my_avg_activity_time = sum(e.activity_time for e in my_entries) / len(my_entries) if my_entries else 0
-                                my_avg_tug = sum(e.tug for e in my_entries) / len(my_entries) if my_entries else 0
+                                my_avg_tug = sum(e.timed_up_and_go_test for e in my_entries) / len(my_entries) if my_entries else 0
                                 st.session_state.comparison = {
                                     "user": {
                                         "Âge": my_avg_age,

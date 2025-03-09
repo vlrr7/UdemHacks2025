@@ -22,7 +22,7 @@ def display_analysis_page():
                 "Calories": entry.calories,
                 "Sommeil (h)": entry.sleep,
                 "Activité (min)": entry.activity_time,
-                "TUG (sec)": entry.tug,
+                "TUG (sec)": entry.timed_up_and_go_test,
                 "Amsler": entry.amsler,
                 "Audition": entry.hearing
             } for entry in entries]

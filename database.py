@@ -67,18 +67,19 @@ class User:
     def find_by_id(user_id):
         return users_collection.find_one({"_id": ObjectId(user_id)})
 
-    def update_password(self, old_password, new_password):
+    @staticmethod
+    def update_password(user_id, old_password, new_password):
         """Updates the user's password if the old password matches."""
-        user_data = users_collection.find_one({"_id": self._id})
+        user_data = users_collection.find_one({"_id": ObjectId(user_id)})
         if not user_data or not check_password_hash(user_data["password"], old_password):
-            return False  # Password incorrect
+            return False  # Incorrect old password
 
         # Hash the new password
         hashed_new_password = generate_password_hash(new_password)
 
         # Update the password in MongoDB
         users_collection.update_one(
-            {"_id": self._id},
+            {"_id": ObjectId(user_id)},
             {"$set": {"password": hashed_new_password}}
         )
         return True  # Password updated successfully
@@ -132,6 +133,8 @@ class DataEntry:
         else:
             result = data_entries_collection.insert_one(doc)
             self._id = result.inserted_id
+            print(f"DataEntry inserted with id: {self._id}")
+        print(f"DataEntry saved: {doc}")
 
     @staticmethod
     def find_by_user_id(user_id):
@@ -155,7 +158,6 @@ class DataEntry:
                 _id=doc["_id"]
             ))
         return entries
-
 # -------------------------------------------------------------------------------
 # 3. CLASSE FOLLOW (remplace le modèle SQLAlchemy "Follow")
 # -------------------------------------------------------------------------------
