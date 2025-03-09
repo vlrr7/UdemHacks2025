@@ -16,7 +16,10 @@ def calculate_target_heart_rate(age):
 
 def display_map_page():
     st.title("Running Tracker")
-    
+    st.markdown("""
+                 <script src="static/gps.js"></script>
+                 """, unsafe_allow_html=True)
+
     if 'user_id' not in st.session_state:
         st.error("Veuillez vous connecter")
         return
@@ -62,13 +65,18 @@ def display_map_page():
         elapsed = time.time() - st.session_state.run_start
         st.session_state.elapsed = elapsed
         
-        try:
-            gps_data = st.query_params
-            lat = float(gps_data.get('lat', [0])[0])
-            lon = float(gps_data.get('lon', [0])[0])
-            new_position = [lat, lon]
-        except:
-            new_position = [48.8566, 2.3522]  # Coordonnées par défaut (Paris)
+    try:
+        gps_data = st.query_params
+        lat = float(gps_data.get('lat', [48.8566])[0])  # Paris par défaut
+        lon = float(gps_data.get('lon', [2.3522])[0])
+        new_position = [lat, lon]
+    
+        # Vérifier si c'est la position par défaut
+        if lat == 48.8566 and lon == 2.3522:
+            st.warning("Attente de la localisation GPS... Autorisez l'accès à votre position dans le navigateur.")
+    except Exception as e:
+        st.error(f"Erreur GPS: {str(e)}")
+        new_position = [48.8566, 2.3522]
 
         new_data = {
             'timestamp': datetime.now(),

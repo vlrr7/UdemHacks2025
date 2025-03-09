@@ -1,5 +1,7 @@
 import streamlit as st
 
+st.set_page_config(layout="wide")
+
 from views.connection_inscription import display_connection_page, display_inscription_page
 from views.data_collection import display_data_collection_page
 from views.analysis import display_analysis_page
@@ -16,10 +18,10 @@ def main():
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "Connexion"
 
-    with st.sidebar:
-        st.markdown("### Navigation")
-        for page in menu:
-            if st.button(page, key=f"menu_{page}"):
+    cols = st.columns(len(menu))
+    for i, page in enumerate(menu):
+        with cols[i]:
+            if st.button(page, key=f"menu_{page}", use_container_width=True):
                 st.session_state.current_page = page
 
     
@@ -52,7 +54,7 @@ def main():
 
     # ----- Paramètres utilisateur -----
     elif st.session_state.current_page == "Paramètres":
-        display_parameters_page()        
+        display_parameters_page()
 
 if __name__ == '__main__':
     main()

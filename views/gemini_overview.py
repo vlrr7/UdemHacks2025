@@ -13,8 +13,8 @@ def display_gemini_overview_page():
         if not entries:
             st.warning("Aucune donnée disponible pour générer une prédiction.")
         else:
-            avg_age = sum(e.age for e in entries) / len(entries) if entries else 0
-            avg_height = sum(e.height for e in entries) / len(entries) if entries else 0
+            avg_age = entries[-1].age if entries else 0
+            avg_height = entries[-1].height if entries else 0
             avg_weight = sum(e.weight for e in entries) / len(entries) if entries else 0
             avg_bmi = sum(e.bmi for e in entries) / len(entries) if entries else 0
             avg_water = sum(e.water for e in entries) / len(entries) if entries else 0
