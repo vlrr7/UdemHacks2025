@@ -11,7 +11,7 @@ from streamlit_javascript import st_javascript  # Nouvelle librairie pour exécu
 import time
 from streamlit_js_eval import get_geolocation
 import math
-
+import time
 
  
 def haversine_distance(coord1, coord2):
@@ -73,7 +73,7 @@ def handle_geolocation_message():
         st.error(f"Geolocation Error: {result['error']}")
 
 def display_map_page():
-    handle_geolocation_message()  # <-- Add this line
+    # handle_geolocation_message()  # <-- Add this line
 
     st.title("🏃 Running Tracker")    
     
