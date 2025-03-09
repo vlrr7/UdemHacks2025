@@ -67,6 +67,23 @@ class User:
     def find_by_id(user_id):
         return users_collection.find_one({"_id": ObjectId(user_id)})
 
+    def update_password(self, old_password, new_password):
+        """Updates the user's password if the old password matches."""
+        user_data = users_collection.find_one({"_id": self._id})
+        if not user_data or not check_password_hash(user_data["password"], old_password):
+            return False  # Password incorrect
+
+        # Hash the new password
+        hashed_new_password = generate_password_hash(new_password)
+
+        # Update the password in MongoDB
+        users_collection.update_one(
+            {"_id": self._id},
+            {"$set": {"password": hashed_new_password}}
+        )
+        return True  # Password updated successfully
+
+
 # -------------------------------------------------------------------------------
 # 3. CLASSE DATAENTRY (version modifiée)
 # -------------------------------------------------------------------------------
@@ -192,3 +209,4 @@ class Follow:
             "follower_id": follower_id,
             "followed_id": followed_id
         })
+    
