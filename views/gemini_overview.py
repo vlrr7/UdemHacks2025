@@ -35,4 +35,6 @@ def display_gemini_overview_page():
             }
             prediction = generate_content(user_data)
             st.subheader("Résultat de la prédiction")
-            st.write(f"{prediction}")
+            response_lines = prediction.split('\n')
+            for line in response_lines:
+                st.write(line)

@@ -19,4 +19,5 @@ def generate_content(data):
         Ne dis rien d'autre.
     """
     )
+    print(response.text)
     return response.text
