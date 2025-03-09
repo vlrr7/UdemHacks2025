@@ -33,6 +33,7 @@ def display_gemini_overview_page():
                 "activity_time": avg_activity_time,
                 "timed_up_and_go_test": avg_tug
             }
+            st.write_stream(user_data)
             prediction = generate_content(user_data)
             st.subheader("Résultat de la prédiction")
             response_lines = prediction.split('\n')

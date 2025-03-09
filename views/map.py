@@ -46,7 +46,7 @@ def get_geolocation():
         return None
 
 def display_map_page():
-    st.title("🏃♂️ Running Tracker")
+    st.title("🏃 Running Tracker")
     
     # Auto-refresh toutes les 5 secondes pour simuler une mise à jour en temps réel
     st_autorefresh(interval=5000, key="datarefresh")
