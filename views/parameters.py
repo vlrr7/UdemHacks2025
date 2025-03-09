@@ -47,24 +47,25 @@ def display_parameters_page():
 
             st.markdown("---")
 
-
             # --- Changer les informations personnelles ---
             st.subheader("👤 Modifier les informations générales")
+
             new_username = st.text_input("Nouveau nom d'utilisateur", value=user["username"])
             new_age = st.number_input("Âge", min_value=0, step=1, value=user["age"])
-            new_sexe = st.number_input("Sexe", value = user["sexe"])
+            new_sexe = st.selectbox("Sexe", ["Homme", "Femme"], index=["Homme", "Femme"].index(user["sexe"]))
             new_height = st.number_input("Taille (cm)", min_value=50, max_value=250, step=1, value=user["height"])
             new_weight = st.number_input("Poids (kg)", min_value=20.0, max_value=200.0, step=0.1, value=user["weight"])
 
             if st.button("Enregistrer les modifications"):
-                user.username = new_username
-                user.age = new_age
-                user.sexe = new_sexe
-                user.height = new_height
-                user.weight = new_weight
-                user.save()  # Update user details in the database
+                # Update user dictionary
+                user["username"] = new_username
+                user["age"] = new_age
+                user["sexe"] = new_sexe
+                user["height"] = new_height
+                user["weight"] = new_weight
+
+                # Here, you should add code to save this to a database
                 st.success("Informations mises à jour avec succès.")
 
             st.markdown("---")
 
-          
