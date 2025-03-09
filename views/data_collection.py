@@ -20,8 +20,8 @@ def display_data_collection_page():
 
         # Initialize session state for persistent fields
         if latest_entry:
-            st.session_state['age'] = latest_entry.age
-            st.session_state['height'] = latest_entry.height
+            st.session_state['age'] = latest_entry["age"]
+            st.session_state['height'] = latest_entry["height"]
         else:
             st.session_state['age'] = 0
             st.session_state['height'] = 50
