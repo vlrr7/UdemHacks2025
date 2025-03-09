@@ -23,11 +23,12 @@ def display_map_page():
     # Rafraîchissement automatique toutes les 5 secondes pour simuler l'actualisation en temps réel
     st_autorefresh(interval=5000, key="datarefresh")
 
-    # Injection d'un bouton HTML personnalisé et du code JavaScript associé pour lancer la géolocalisation
+    # Injection d'un bouton HTML personnalisé et du code JavaScript associé
     html("""
     <button id="start-tracking" style="padding:10px;font-size:16px;">🚩 Démarrer la course (JS)</button>
     <script>
     function startTracking() {
+        console.log("Bouton cliqué, demande de géolocalisation lancée");
         if (!navigator.geolocation) {
             alert("La géolocalisation n'est pas supportée par ce navigateur.");
             return;
@@ -101,6 +102,7 @@ def display_map_page():
     if st.session_state.run_start:
         elapsed = time.time() - st.session_state.run_start
         st.session_state.elapsed = elapsed
+        st.rerun(minutes=0.02)
 
         query_params = st.experimental_get_query_params()
         try:
