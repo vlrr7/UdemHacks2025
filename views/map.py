@@ -2,12 +2,12 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import pydeck as pdk
 import time
 from datetime import datetime
+import pydeck as pdk
 from streamlit_autorefresh import st_autorefresh
 from database import User
-from streamlit_geolocation import st_geolocation  # Composant tiers
+from streamlit_javascript import st_javascript  # Nouvelle librairie pour exécuter du JS
 
 def calculate_target_heart_rate(age):
     max_hr = 220 - age
@@ -17,25 +17,40 @@ def calculate_target_heart_rate(age):
         'modéré': 0.70 * max_hr
     }
 
+def get_geolocation():
+    # Code JavaScript asynchrone pour récupérer la position
+    js_code = """
+    async function getLocation() {
+      return new Promise((resolve, reject) => {
+          if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(
+                  (position) => {
+                      resolve({lat: position.coords.latitude, lon: position.coords.longitude});
+                  },
+                  (error) => {
+                      reject("Erreur de géolocalisation: " + error.message);
+                  }
+              );
+          } else {
+              reject("La géolocalisation n'est pas supportée par ce navigateur.");
+          }
+      });
+    }
+    getLocation();
+    """
+    try:
+        result = st_javascript(js_code, key="geolocation")
+        return result  # Doit être un dictionnaire avec keys "lat" et "lon"
+    except Exception as e:
+        st.error("Erreur lors de la récupération de la géolocalisation: " + str(e))
+        return None
+
 def display_map_page():
     st.title("🏃♂️ Running Tracker")
     
-    # Auto-refresh toutes les 5 secondes pour actualiser les données
+    # Auto-refresh toutes les 5 secondes pour simuler une mise à jour en temps réel
     st_autorefresh(interval=5000, key="datarefresh")
     
-    # Demande de géolocalisation via le composant custom
-    location = st_geolocation(label="Veuillez autoriser la géolocalisation")
-    if location is None:
-        st.info("En attente de l'autorisation de géolocalisation...")
-        lat, lon = 48.8566, 2.3522  # Position par défaut (Paris)
-    else:
-        try:
-            lat = float(location.get("lat"))
-            lon = float(location.get("lon"))
-        except Exception as e:
-            st.error(f"Erreur dans les coordonnées reçues: {e}")
-            lat, lon = 48.8566, 2.3522
-
     # Vérifier que l'utilisateur est connecté
     if 'user_id' not in st.session_state:
         st.error("Veuillez vous connecter")
@@ -50,7 +65,7 @@ def display_map_page():
         
     heart_rates = calculate_target_heart_rate(age)
     
-    # Initialisation des données de course dans la session
+    # Initialisation des données de course si elles n'existent pas
     if 'run_data' not in st.session_state:
         st.session_state.run_data = {
             'timestamps': [],
@@ -77,17 +92,24 @@ def display_map_page():
                 'positions': []
             }
             st.session_state.elapsed = 0
-
-    # Si la course est en cours, mise à jour des données avec la position actuelle
+            
+    # Si la course est en cours, récupérer la géolocalisation via le code JS et mettre à jour les données
     if st.session_state.run_start:
         elapsed = time.time() - st.session_state.run_start
         st.session_state.elapsed = elapsed
 
+        geo = get_geolocation()
+        if geo and "lat" in geo and "lon" in geo:
+            new_position = [geo["lat"], geo["lon"]]
+        else:
+            new_position = [48.8566, 2.3522]
+            st.info("🔍 Recherche du signal GPS...")
+
         new_data = {
             'timestamp': datetime.now(),
-            'speed': np.random.uniform(10, 15),  # Simulation de la vitesse
-            'heart_rate': np.random.randint(120, 190),  # Simulation de la fréquence cardiaque
-            'position': [lat, lon]
+            'speed': np.random.uniform(10, 15),
+            'heart_rate': np.random.randint(120, 190),
+            'position': new_position
         }
         st.session_state.run_data['timestamps'].append(new_data['timestamp'])
         st.session_state.run_data['speeds'].append(new_data['speed'])
@@ -103,7 +125,7 @@ def display_map_page():
         cols[1].metric("📈 Vitesse", f"{current_speed:.1f} km/h")
         cols[2].metric("💓 FC Actuelle", f"{current_hr} bpm")
         cols[3].metric("🎯 Cible FC", f"{heart_rates[target_type.lower()]:.0f} bpm")
-    
+        
     if st.session_state.run_data['positions']:
         df = pd.DataFrame({
             'lat': [pos[0] for pos in st.session_state.run_data['positions']],
@@ -129,7 +151,7 @@ def display_map_page():
         ))
     else:
         st.info("🗺️ La carte s'affichera ici dès la réception des données GPS")
-    
+        
     if st.session_state.run_data['speeds']:
         st.line_chart(pd.DataFrame({
             'Vitesse (km/h)': st.session_state.run_data['speeds'],
