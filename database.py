@@ -62,12 +62,22 @@ class User:
     @staticmethod
     def find_by_username(username):
         return users_collection.find_one({"username": username})
+    
+    @staticmethod
+    def find_by_id(user_id):
+        return users_collection.find_one({"_id": ObjectId(user_id)})
 
 # Modified DataEntry Class
 class DataEntry:
     def __init__(self, user_id, **kwargs):
+        # Convert date to datetime if needed
+        date = kwargs.get('date', datetime.datetime.utcnow())
+        if isinstance(date, datetime.date):
+            self.date = datetime.combine(date, datetime.min.time())
+        else:
+            self.date = date or datetime.utcnow()
+
         self.user_id = ObjectId(user_id) if isinstance(user_id, str) else user_id
-        self.date = kwargs.get('date', datetime.datetime.utcnow())
         self.pushups = kwargs.get('pushups', 0)
         self.meals_count = kwargs.get('meals_count', 0)
         self.meals_details = kwargs.get('meals_details', {})

@@ -59,7 +59,8 @@ def main():
             st.error("Veuillez vous connecter pour saisir vos données.")
         else:
             user_id = st.session_state['user_id']
-            date = st.date_input("Date", datetime.date.today())
+            unformatted_date = st.date_input("Date", datetime.date.today())
+            date = datetime.datetime.combine(unformatted_date, datetime.datetime.min.time())
             pushups = st.number_input("Nombre de pompes", min_value=0, step=1)
             meals_count = st.number_input("Nombre de repas", min_value=0, step=1)
             st.info("Saisissez les détails de vos repas au format JSON. Ex: {\"petit_dejeuner\": \"oeufs, toast\", \"dejeuner\": \"salade\"}")
@@ -128,8 +129,9 @@ def main():
             if st.button("Suivre"):
                 user_to_follow = User.find_by_username(follow_username)
                 if user_to_follow:
-                    if not Follow.find_one(user_id, str(user_to_follow._id)):
-                        new_follow = Follow(follower_id=user_id, followed_id=str(user_to_follow._id))
+                    print(user_to_follow)
+                    if not Follow.find_one(user_id, str(user_to_follow)):
+                        new_follow = Follow(follower_id=user_id, followed_id=str(user_to_follow["_id"]))
                         new_follow.save()
                         st.success(f"Vous suivez désormais {follow_username}!")
                     else:
@@ -147,19 +149,19 @@ def main():
                 cols = st.columns(len(followed_users))
                 for i, friend in enumerate(followed_users):
                     with cols[i]:
-                        if st.button(friend.username, key=f"friend_{friend._id}"):
-                            st.session_state.selected_user_id = str(friend._id)
+                        if st.button(friend["username"], key=f"friend_{friend["_id"]}"):
+                            st.session_state.selected_user_id = str(friend["_id"])
                             st.session_state.comparison_mode = False
                 if 'selected_user_id' in st.session_state:
                     selected_user = User.find_by_id(st.session_state.selected_user_id)
                 if selected_user:
-                    st.subheader(f"Statistiques de {selected_user.username}")
+                    st.subheader(f"Statistiques de {selected_user["username"]}")
                     if st.button("Ne plus suivre"):
-                        Follow.delete(user_id, str(selected_user._id))
-                        st.success(f"Vous ne suivez plus {selected_user.username}.")
+                        Follow.delete(user_id, str(selected_user["_id"]))
+                        st.success(f"Vous ne suivez plus {selected_user["username"]}.")
                         del st.session_state.selected_user_id
     
-                    entries = DataEntry.find_by_user_id(str(selected_user._id))
+                    entries = DataEntry.find_by_user_id(str(selected_user["_id"]))
                     if not entries:
                         st.warning("Aucune donnée disponible pour cet utilisateur.")
                     else:
@@ -194,7 +196,7 @@ def main():
                         if 'show_global' in st.session_state and st.session_state.show_global:
                             st.markdown(f"""
                                 <div class="stat-box">
-                                    <h4>📊 Statistiques globales de {selected_user.username}</h4>
+                                    <h4>📊 Statistiques globales de {selected_user["username"]}</h4>
                                     <p>💪 Pompes moyennes : <strong>{st.session_state.friend_global['Pompes']:.1f}</strong></p>
                                     <p>🍽 Repas moyens : <strong>{st.session_state.friend_global['Repas']:.1f}</strong></p>
                                     <p>💧 Eau moyenne : <strong>{st.session_state.friend_global['Eau']:.1f} L</strong></p>
@@ -238,7 +240,7 @@ def main():
                             with col2:
                                 st.markdown(f"""
                                     <div class="comparison-box">
-                                        <h4>Statistiques de {selected_user.username}</h4>
+                                        <h4>Statistiques de {selected_user["username"]}</h4>
                                 """, unsafe_allow_html=True)
                                 st.write(f"💪 Pompes : {st.session_state.comparison['friend']['Pompes']:.1f}")
                                 st.write(f"🍽 Repas : {st.session_state.comparison['friend']['Repas']:.1f}")
