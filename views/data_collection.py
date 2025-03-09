@@ -74,11 +74,10 @@ def display_data_collection_page():
                 amsler=amsler,
                 hearing=hearing
             )
+            new_entry.save()
         
-        new_entry.save()
-        
-        st.session_state['age'] = age    # Save to session state
-        st.session_state['sexe'] = sexe
-        st.session_state['height'] = height
-        
-        st.success("Données enregistrées avec succès!")
+            st.session_state['age'] = age    # Save to session state
+            st.session_state['sexe'] = sexe
+            st.session_state['height'] = height
+            
+            st.success("Données enregistrées avec succès!")
