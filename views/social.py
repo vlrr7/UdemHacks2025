@@ -34,17 +34,12 @@ def display_social_page():
         else:
             followed_users = [User.find_by_id(uid) for uid in followed_ids]
             selected_user = None
-            cols = st.columns(len(followed_users))
-            for i, friend in enumerate(followed_users):
-                with cols[i]:
-                    if st.button(friend["username"], key=f"friend_{friend["_id"]}_{i}"):
-                        st.session_state.selected_user_id = str(friend["_id"])
-                        st.session_state.comparison_mode = False
-                    if st.button(f"Ne plus suivre {friend["username"]}", key=f"unfollow_{friend["_id"]}_{i}"):
-                        Follow.delete(user_id, str(friend["_id"]))
-                        st.success(f"Vous ne suivez plus {friend["username"]}.")
-                        del st.session_state.selected_user_id
-                        st.rerun()
+            followed_usernames = [friend["username"] for friend in followed_users]
+            selected_username = st.selectbox("Sélectionner un ami", followed_usernames)
+            selected_user = next((friend for friend in followed_users if friend["username"] == selected_username), None)
+            if selected_user:
+                st.session_state.selected_user_id = str(selected_user["_id"])
+                st.session_state.comparison_mode = False
             if 'selected_user_id' in st.session_state:
                 selected_user = User.find_by_id(st.session_state.selected_user_id)
             if selected_user:
@@ -53,6 +48,7 @@ def display_social_page():
                     Follow.delete(user_id, str(selected_user["_id"]))
                     st.success(f"Vous ne suivez plus {selected_user["username"]}.")
                     del st.session_state.selected_user_id
+                    st.rerun()
 
                 entries = DataEntry.find_by_user_id(str(selected_user["_id"]))
                 if not entries:
