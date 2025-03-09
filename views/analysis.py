@@ -33,6 +33,12 @@ def display_analysis_page():
             # You can add plots here if needed, but the data structure has changed significantly
             # Example: st.line_chart(df[["date", "Sommeil (h)"]].set_index("date"))
 
+
+
+    # Saisie des critères
+    age = st.number_input("Âge (ans)", min_value=1, max_value=150, value=25)
+    sexe = st.selectbox("Sexe", ["Homme", "Femme"])
+
     if st.button("Afficher les normes"):
         try:
             # Lecture du fichier CSV avec ";" comme délimiteur et "," comme séparateur décimal
