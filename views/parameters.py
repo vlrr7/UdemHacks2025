@@ -1,5 +1,5 @@
 import streamlit as st
-from database import User, users_collection
+from database import User, users_collection, ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 
 def display_parameters_page():
@@ -56,7 +56,7 @@ def display_parameters_page():
             
             if st.button("Supprimer mon compte"):
                 if check_password_hash(user["password"], delete_password):  # Verify password
-                    users_collection.delete_one({"_id": (user._id)})  # Delete user from DB
+                    users_collection.delete_one({"_id": ObjectId(user_id)})  # Delete user from DB
                     del st.session_state['user_id']  # Clear session
                     st.success("Votre compte a été supprimé avec succès. Redirection vers la page d'accueil...")
                     st.session_state.current_page = "Connexion"
