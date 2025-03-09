@@ -42,7 +42,7 @@ def display_analysis_page():
             st.markdown("---")
 
             # Configuration des colonnes pour le selecteur et le bouton
-            col1, col2 = st.columns([3, 1])
+            col1, col2 = st.columns([2, 1])
 
             # Liste des options de graphes
             graph_options = ["Taille", "Poids", "IMC", "Eau", "Calories", "Sommeil", "Activité", "TUG", "Audition"]
@@ -61,8 +61,6 @@ def display_analysis_page():
                     if st.button(f"Afficher {selected_graph}"):
                         st.session_state.graph = selected_graph
                         st.rerun()
-
-            st.markdown("---")
 
             # Zone fixe pour les graphiques
             graph_placeholder = st.empty()
