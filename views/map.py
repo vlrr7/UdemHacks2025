@@ -10,6 +10,26 @@ from database import User
 from streamlit_javascript import st_javascript  # Nouvelle librairie pour exécuter du JS
 import time
 from streamlit_js_eval import get_geolocation
+import math
+
+
+
+def haversine_distance(coord1, coord2):
+    """
+    Calcule la distance en mètres entre deux points (lat, lon) en utilisant la formule de Haversine.
+    """
+    R = 6371e3  # rayon de la Terre en mètres
+    lat1, lon1 = math.radians(coord1[0]), math.radians(coord1[1])
+    lat2, lon2 = math.radians(coord2[0]), math.radians(coord2[1])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
+
+
+
+
 
 # Update refresh rate to 1 second for better real-time feel
 st_autorefresh(interval=1000, key="maprefresh")
@@ -74,10 +94,11 @@ def display_map_page():
     # Initialisation des données de course si elles n'existent pas
     if 'run_data' not in st.session_state:
         st.session_state.run_data = {
+            'positions': [],
             'timestamps': [],
             'speeds': [],
-            'heart_rates': [],
-            'positions': []
+            'heart_rates': []
+            
         }
         st.session_state.run_start = None
         st.session_state.elapsed = 0
@@ -92,10 +113,11 @@ def display_map_page():
     with col3:
         if st.button("🔄 Réinitialiser"):
             st.session_state.run_data = {
+                'positions': [],
                 'timestamps': [],
                 'speeds': [],
-                'heart_rates': [],
-                'positions': []
+                'heart_rates': []
+                
             }
             st.session_state.elapsed = 0
             
@@ -113,16 +135,32 @@ def display_map_page():
             new_position = [48.8566, 2.3522]
             st.info("🔍 Recherche du signal GPS...")
 
-        new_data = {
+
+        # Calcule la vitesse réelle si une position précédente existe
+        current_timestamp = datetime.now()
+    if st.session_state.run_data['positions']:
+        previous_position = st.session_state.run_data['positions'][-1]
+        previous_timestamp = st.session_state.run_data['timestamps'][-1]
+        time_diff = (current_timestamp - previous_timestamp).total_seconds()
+        if time_diff > 0:
+            distance = haversine_distance(previous_position, new_position)  # en mètres
+            speed = (distance / time_diff) * 3.6  # conversion m/s en km/h
+        else:
+            speed = 0
+    else:
+        speed = 0
+
+
+    new_data = {
             'timestamp': datetime.now(),
-            'speed': np.random.uniform(10, 15),
+            'speed': speed,
             'heart_rate': np.random.randint(120, 190),
             'position': new_position
-        }
-        st.session_state.run_data['timestamps'].append(new_data['timestamp'])
-        st.session_state.run_data['speeds'].append(new_data['speed'])
-        st.session_state.run_data['heart_rates'].append(new_data['heart_rate'])
-        st.session_state.run_data['positions'].append(new_data['position'])
+    }
+    st.session_state.run_data['timestamps'].append(new_data['timestamp'])
+    st.session_state.run_data['speeds'].append(new_data['speed'])
+    st.session_state.run_data['heart_rates'].append(new_data['heart_rate'])
+    st.session_state.run_data['positions'].append(new_data['position'])
         
     current_speed = st.session_state.run_data['speeds'][-1] if st.session_state.run_data['speeds'] else 0
     current_hr = st.session_state.run_data['heart_rates'][-1] if st.session_state.run_data['heart_rates'] else 0
@@ -139,36 +177,43 @@ def display_map_page():
         latest_lat = st.session_state.run_data['positions'][-1][0]
         latest_lon = st.session_state.run_data['positions'][-1][1]
         
+
+
+    if st.session_state.run_data['positions']:
+    # Convertir la liste des positions au format [lon, lat] pour PathLayer
+        path_positions = [[pos[1], pos[0]] for pos in st.session_state.run_data['positions']]
+        latest_lat = st.session_state.run_data['positions'][-1][0]
+        latest_lon = st.session_state.run_data['positions'][-1][1]
+
+
         st.pydeck_chart(pdk.Deck(
-            map_style='mapbox://styles/mapbox/outdoors-v11',
-            initial_view_state=pdk.ViewState(
-                latitude=latest_lat,  # Focus on latest position
-                longitude=latest_lon,
-                zoom=16,  # Closer zoom for real-time tracking
-                pitch=50
-            ),
-            layers=[
-                pdk.Layer(
-                    'ScatterplotLayer',
-                    data=pd.DataFrame({
-                        'lat': [latest_lat],
-                        'lon': [latest_lon]
-                    }),
-                    get_position='[lon, lat]',
-                    get_color='[0, 128, 255, 200]',  # Blue dot for current position
-                    get_radius=25,
-                ),
-                pdk.Layer(
-                    'PathLayer',
-                    data=pd.DataFrame({
-                        'path': [st.session_state.run_data['positions']]
-                    }),
-                    get_path='path',
-                    get_color='[255, 0, 0, 150]',  # Red line for path
-                    get_width=5,
-                )
-            ]
-        ))
+    map_style='open-street-map',  # Utilisation d'OpenStreetMap, sans clé API Mapbox
+    initial_view_state=pdk.ViewState(
+        latitude=latest_lat,  # Centrer la vue sur la dernière position
+        longitude=latest_lon,
+        zoom=16,            # Zoom rapproché pour un suivi en temps réel
+        pitch=50
+    ),
+    layers=[
+        pdk.Layer(
+            'ScatterplotLayer',
+            data=pd.DataFrame({
+                'lat': [latest_lat],
+                'lon': [latest_lon]
+            }),
+            get_position='[lon, lat]',
+            get_color='[0, 128, 255, 200]',  # Point bleu pour la position actuelle
+            get_radius=25,
+        ),
+        pdk.Layer(
+            'PathLayer',
+            data=pd.DataFrame({'path': [path_positions]}),
+            get_path='path',
+            get_color='[255, 0, 0, 150]',  # Ligne rouge pour la trajectoire
+            get_width=5,
+        )
+    ]
+))
     else:
         st.info("🗺️ La carte s'affichera ici dès la réception des données GPS")
         
