@@ -101,7 +101,6 @@ def display_analysis_page():
                 plt.close(fig)
 
 
-
     st.markdown("---")
     # Saisie des critères
     update_session_state()
