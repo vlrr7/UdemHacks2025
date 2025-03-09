@@ -7,7 +7,6 @@ import pydeck as pdk
 import datetime
 import pandas as pd
 from streamlit_autorefresh import st_autorefresh
-from streamlit_geolocation import get_position  # Composant tiers
 
 # Fonction de calcul de la distance (en mètres) entre deux points via la formule haversine
 def haversine(lat1, lon1, lat2, lon2):
@@ -38,7 +37,7 @@ def display_map_page():
         st.session_state.speeds = []      # Liste des tuples (timestamp, speed_kmh)
 
     # Affichage de la géolocalisation en temps réel via get_position
-    location = get_position("Veuillez autoriser l'accès à votre localisation")
+    location = None # get_position("Veuillez autoriser l'accès à votre localisation")
     if location is None:
         st.warning("En attente de la localisation...")
         return  # On quitte tant qu'on n'a pas la position
