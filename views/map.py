@@ -127,6 +127,7 @@ def display_map_page():
         elapsed = time.time() - st.session_state.run_start
         st.session_state.elapsed = elapsed
 
+        geo = None
         for i in range(3):
             geo = get_geolocation()
             if geo is None:
@@ -234,6 +235,6 @@ def display_map_page():
             'Vitesse (km/h)': st.session_state.run_data['speeds'],
             'Fréquence cardiaque': st.session_state.run_data['heart_rates']
         }))
-        
+
     time.sleep(1)
     st.rerun()
