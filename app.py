@@ -8,7 +8,6 @@ from views.gemini_overview import display_gemini_overview_page
 from views.parameters import display_parameters_page
 
 def main():
-    st.title("Connectez vous à HealthPro!")
     menu = ["Connexion", "Inscription", "Collecte des Données",
             "Analyse", "Social", "Gemini Predictions", "Paramètres"]
     # Configuration du menu latéral toujours ouvert

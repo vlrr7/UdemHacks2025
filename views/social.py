@@ -2,6 +2,7 @@ import streamlit as st
 from database import User, Follow, DataEntry
 
 def display_social_page():
+    st.title("HealthPro")
     st.header("Réseau Social")
     if 'user_id' not in st.session_state:
         st.error("Veuillez vous connecter pour accéder aux fonctionnalités sociales.")
@@ -13,17 +14,18 @@ def display_social_page():
         follow_username = st.text_input("Nom d'utilisateur à suivre")
         if st.button("Suivre"):
             user_to_follow = User.find_by_username(follow_username)
-            if str(user_id) == str(user_to_follow["_id"]):
+            if not user_to_follow:
+                st.error("Utilisateur non trouvé.")
+            elif str(user_id) == str(user_to_follow["_id"]):
                 st.info("Vous ne pouvez pas vous suivre vous-même.")
-            elif user_to_follow:
+            else:
                 if not Follow.find_one(user_id, str(user_to_follow["_id"])):
                     new_follow = Follow(follower_id=user_id, followed_id=str(user_to_follow["_id"]))
                     new_follow.save()
                     st.success(f"Vous suivez désormais {follow_username}!")
                 else:
                     st.info("Vous suivez déjà cet utilisateur.")
-            else:
-                st.error("Utilisateur non trouvé.")
+
         st.subheader("Vos amis")
         follows = Follow.find_by_follower_id(user_id)
         followed_ids = [f.followed_id for f in follows]

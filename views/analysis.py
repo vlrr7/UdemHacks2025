@@ -3,6 +3,7 @@ from database import DataEntry
 import pandas as pd
 
 def display_analysis_page():
+    st.title("HealthPro")
     st.header("Analyse de vos données")
     if 'user_id' not in st.session_state:
         st.error("Veuillez vous connecter pour accéder à l'analyse.")

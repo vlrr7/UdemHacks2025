@@ -2,6 +2,7 @@ import streamlit as st
 from database import login, register
 
 def display_connection_page():
+    st.title("Connectez vous à HealthPro!")
     st.header("Connexion")
     username = st.text_input("Nom d'utilisateur")
     password = st.text_input("Mot de passe", type="password")
@@ -15,6 +16,7 @@ def display_connection_page():
 
 
 def display_inscription_page():
+    st.title("HealthPro")
     st.header("Inscription")
     username = st.text_input("Nom d'utilisateur", key="reg_username")
     email = st.text_input("Email", key="reg_email")

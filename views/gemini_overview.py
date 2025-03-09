@@ -3,6 +3,7 @@ from database import DataEntry
 from ai_manager import gemini_predict
 
 def display_gemini_overview_page():
+    st.title("HealthPro")
     st.header("Prédictions et Recommandations (Gemini)")
     if 'user_id' not in st.session_state:
         st.error("Veuillez vous connecter pour accéder aux prédictions.")
@@ -20,7 +21,7 @@ def display_gemini_overview_page():
             avg_calories = sum(e.calories for e in entries) / len(entries) if entries else 0
             avg_sleep = sum(e.sleep for e in entries) / len(entries) if entries else 0
             avg_activity_time = sum(e.activity_time for e in entries) / len(entries) if entries else 0
-            avg_tug = sum(e.tug for e in entries) / len(entries) if entries else 0
+            avg_tug = sum(e.timed_up_and_go_test for e in entries) / len(entries) if entries else 0
             user_data = {
                 "age": avg_age,
                 "height": avg_height,
@@ -30,7 +31,7 @@ def display_gemini_overview_page():
                 "calories": avg_calories,
                 "sleep": avg_sleep,
                 "activity_time": avg_activity_time,
-                "tug": avg_tug
+                "timed_up_and_go_test": avg_tug
             }
             st.write("Données agrégées pour la prédiction :", user_data)
             prediction = gemini_predict(user_data)

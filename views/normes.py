@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 
 def display_normes_page():
+    st.title("HealthPro")
     st.header("Normes des renseignements")
     st.write("Saisissez vos renseignements pour obtenir le résumé des normes.")
 

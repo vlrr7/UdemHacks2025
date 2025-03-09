@@ -3,6 +3,7 @@ import datetime
 from database import DataEntry
 
 def display_data_collection_page():
+    st.title("HealthPro")
     st.header("Saisie de vos données quotidiennes")
     if 'user_id' not in st.session_state:
         st.error("Veuillez vous connecter pour saisir vos données.")
@@ -27,9 +28,9 @@ def display_data_collection_page():
 
         # Données pour ainés (optionnelles)
         st.subheader("Pour les seniors (optionnel)")
-        tug = st.number_input("Test de 'Timed up and go' (sec) - Temps que ça vous prend pour vous lever d'une position assise", min_value=0.0, step=0.1, value=0.0)
-        amsler = st.text_input("Résultat test visuel (Amsler)", value="Normal")
-        hearing = st.text_input("Résultat test auditif", value="Normal")
+        tug = st.number_input("Test de 'Timed up and go' (sec) \n- Temps que ça vous prend pour vous lever d'une position assise", min_value=0.0, step=0.1, value=0.0)
+        amsler = st.text_input("Résultat test visuel (Amsler)\n- ", value="Normal")
+        hearing = st.text_input("Résultat test auditif\n -Instructions : Écoutez le son d'une montre à 30", value="Normal")
         if st.button("Enregistrer les données"):
             new_entry = DataEntry(
                 user_id=user_id,
