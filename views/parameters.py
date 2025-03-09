@@ -59,7 +59,7 @@ def display_parameters_page():
                     users_collection.delete_one({"_id": (user_id)})  # Delete user from DB
                     del st.session_state['user_id']  # Clear session
                     st.success("Votre compte a été supprimé avec succès. Redirection vers la page d'accueil...")
-                    st.session_state.current_page = "Accueil"
+                    st.session_state.current_page = "Connexion"
                     st.rerun()
                 else:
                     st.error("Mot de passe incorrect. Impossible de supprimer le compte.")
