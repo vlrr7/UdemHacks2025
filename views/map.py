@@ -127,6 +127,7 @@ def display_map_page():
         st.session_state.elapsed = elapsed
 
         geo = get_geolocation()
+        time.sleep(2)
         st.info(str(geo))
         if geo and geo["coords"]:
             new_position = [geo["coords"]["latitude"], geo["coords"]["longitude"]]
