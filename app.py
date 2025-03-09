@@ -127,7 +127,7 @@ def main():
                 if user_id == user_to_follow["_id"]:
                     st.info("Vous ne pouvez pas vous suivre vous-même.")  
                 elif user_to_follow:
-                    if not Follow.find_one(user_id, str(user_to_follow)):
+                    if not Follow.find_one(user_id, str(user_to_follow["_id"])):
                         new_follow = Follow(follower_id=user_id, followed_id=str(user_to_follow["_id"]))
                         new_follow.save()
                         st.success(f"Vous suivez désormais {follow_username}!")
@@ -149,6 +149,11 @@ def main():
                         if st.button(friend["username"], key=f"friend_{friend["_id"]}_{i}"):
                             st.session_state.selected_user_id = str(friend["_id"])
                             st.session_state.comparison_mode = False
+                        if st.button(f"Ne plus suivre {friend["username"]}", key=f"unfollow_{friend["_id"]}_{i}"):
+                            Follow.delete(user_id, str(friend["_id"]))
+                            st.success(f"Vous ne suivez plus {friend["username"]}.")
+                            del st.session_state.selected_user_id
+                            st.rerun()
                 if 'selected_user_id' in st.session_state:
                     selected_user = User.find_by_id(st.session_state.selected_user_id)
                 if selected_user:
@@ -298,9 +303,9 @@ def main():
                 st.write("Données agrégées pour la prédiction :", user_data)
                 prediction = gemini_predict(user_data)
                 st.subheader("Résultat de la prédiction")
-                st.write(f"**Niveau de risque :** {prediction['risk_level']}")
-                st.write(f"**Conditions potentielles :** {', '.join(prediction['potential_conditions'])}")
-                st.write(f"**Recommandations :** {prediction['recommendations']}")
+                st.write(f"**Niveau de risque :** {prediction}")
+                st.write(f"**Conditions potentielles :** {', '.join(prediction)}")
+                st.write(f"**Recommandations :** {prediction}")
 
     # ----- Paramètres utilisateur -----
     elif st.session_state.current_page == "Paramètres":

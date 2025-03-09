@@ -16,15 +16,20 @@ def gemini_predict(data):
     # Ici, nous retournons une réponse fictive :
     client = genai.Client(api_key=st.secrets.GEMINI_API_KEY)
     response = client.models.generate_content(
-        model="gemini-2.0-flash", contents=[{"text": str(data)}])
+        model="gemini-2.0-flash", contents= f"""{str(data)}. These are the user's data for an application that tracks
+        what a routine and health conditions and is able to predict his risk level of found conditions,
+        i want you to only indicate the following in french,
+        niveau de risque: (Bas, Moyen, Haut),
+        Conditions potentiels: (Type of possible sicknesses, conditions)
+        Recommendations: (What do you recommend the user to do)""")
     return response.text
 
-    prediction = {
-        "risk_level": "Faible",
-        "potential_conditions": ["Aucune anomalie détectée"],
-        "recommendations": "Continuez à suivre un régime équilibré et à pratiquer une activité physique régulière."
-    }
-    return prediction
+    # prediction = {
+    #     "risk_level": "Faible",
+    #     "potential_conditions": ["Aucune anomalie détectée"],
+    #     "recommendations": "Continuez à suivre un régime équilibré et à pratiquer une activité physique régulière."
+    # }
+    # return prediction
 
 
 def evaluate_risk(data):
