@@ -76,7 +76,6 @@ def display_data_collection_page():
         )
         new_entry.save()
         
-        # --- ADD THESE LINES ---
         st.session_state['age'] = age    # Save to session state
         st.session_state['sexe'] = sexe
         st.session_state['height'] = height

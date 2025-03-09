@@ -7,6 +7,7 @@ from views.social import display_social_page
 from views.gemini_overview import display_gemini_overview_page
 from views.parameters import display_parameters_page
 from views.normes import display_normes_page
+from views.map import display_map_page
 
 
 def main():
