@@ -154,8 +154,8 @@ class DataEntry:
                 sleep=doc["sleep"],
                 activity_time=doc["activity_time"],
                 timed_up_and_go_test=doc["timed_up_and_go_test"],
-                amsler=doc["amsler", "Normal"],
-                hearing=doc["hearing", "Normal"],
+                amsler=doc["amsler"],
+                hearing=doc["hearing"],
                 _id=doc["_id"],
             ))
         return entries
