@@ -94,32 +94,47 @@ class DataEntry:
         )
 
 # -------------------------------------------------------------------------------
-# 3. CLASSE DATAENTRY (remplace le modèle SQLAlchemy "DataEntry")
+# 3. CLASSE DATAENTRY (version modifiée)
 # -------------------------------------------------------------------------------
 class DataEntry:
-    def __init__(self, user_id, date=None, pushups=0, meals_count=0, meals_details=None,
-                 water_intake=0.0, sleep_hours=0.0, time_spent=0.0, _id=None):
-        self._id = _id
-        self.user_id = user_id  # Conservez en tant que chaîne ou ObjectId (choisissez et soyez cohérent)
-        self.date = date or datetime.datetime.utcnow()
-        self.pushups = pushups
-        self.meals_count = meals_count
-        self.meals_details = meals_details or {}
-        self.water_intake = water_intake
-        self.sleep_hours = sleep_hours
-        self.time_spent = time_spent
+    def __init__(self, user_id, **kwargs):
+        self.user_id = ObjectId(user_id) if isinstance(user_id, str) else user_id
+        self.date = kwargs.get('date') or datetime.datetime.utcnow()
+        
+        # Nouveaux champs généraux
+        self.age = kwargs.get('age', 0)
+        self.height = kwargs.get('height', 0)  # Taille en cm
+        self.weight = kwargs.get('weight', 0.0)  # Poids en kg
+        self.bmi = kwargs.get('bmi', 0.0)  # Calculé automatiquement
+        
+        # Données quotidiennes
+        self.water = kwargs.get('water', 0.0)  # Eau en litres
+        self.calories = kwargs.get('calories', 0)  # Calories consommées
+        self.sleep = kwargs.get('sleep', 0.0)  # Heures de sommeil
+        self.activity_time = kwargs.get('activity_time', 0)  # Temps d'activité en min
+        
+        # Données pour seniors (optionnelles)
+        self.tug = kwargs.get('tug', 0.0)  # Test TUG en secondes
+        self.amsler = kwargs.get('amsler', "Normal")  # Résultat Amsler
+        self.hearing = kwargs.get('hearing', "Normal")  # Résultat auditif
+        
+        self._id = kwargs.get('_id', ObjectId())
 
     def save(self):
-        """Insère ou met à jour cette entrée de données dans MongoDB."""
         doc = {
             "user_id": self.user_id,
             "date": self.date,
-            "pushups": self.pushups,
-            "meals_count": self.meals_count,
-            "meals_details": self.meals_details,
-            "water_intake": self.water_intake,
-            "sleep_hours": self.sleep_hours,
-            "time_spent": self.time_spent
+            "age": self.age,
+            "height": self.height,
+            "weight": self.weight,
+            "bmi": self.bmi,
+            "water": self.water,
+            "calories": self.calories,
+            "sleep": self.sleep,
+            "activity_time": self.activity_time,
+            "tug": self.tug,
+            "amsler": self.amsler,
+            "hearing": self.hearing
         }
         if self._id:
             data_entries_collection.update_one({"_id": self._id}, {"$set": doc})
@@ -129,19 +144,24 @@ class DataEntry:
 
     @staticmethod
     def find_by_user_id(user_id):
-        docs = data_entries_collection.find({"user_id": user_id}).sort("date", -1)
+        docs = data_entries_collection.find({"user_id": ObjectId(user_id)}).sort("date", -1)
         entries = []
         for doc in docs:
             entries.append(DataEntry(
-                _id=doc["_id"],
                 user_id=doc["user_id"],
                 date=doc["date"],
-                pushups=doc["pushups"],
-                meals_count=doc["meals_count"],
-                meals_details=doc["meals_details"],
-                water_intake=doc["water_intake"],
-                sleep_hours=doc["sleep_hours"],
-                time_spent=doc["time_spent"]
+                age=doc.get("age", 0),
+                height=doc.get("height", 0),
+                weight=doc.get("weight", 0.0),
+                bmi=doc.get("bmi", 0.0),
+                water=doc.get("water", 0.0),
+                calories=doc.get("calories", 0),
+                sleep=doc.get("sleep", 0.0),
+                activity_time=doc.get("activity_time", 0),
+                tug=doc.get("tug", 0.0),
+                amsler=doc.get("amsler", "Normal"),
+                hearing=doc.get("hearing", "Normal"),
+                _id=doc["_id"]
             ))
         return entries
 
