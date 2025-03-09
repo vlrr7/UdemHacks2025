@@ -13,7 +13,7 @@ def display_data_collection_page():
 
         # Fetch the latest data entry for the user
         entries = DataEntry.find_by_user_id(user_id)
-        latest_entry = entries[0] if entries else None
+        latest_entry = entries[-1] if entries else None
 
         unformatted_date = st.date_input("Date", datetime.date.today())
         date = datetime.datetime.combine(unformatted_date, datetime.datetime.min.time())
@@ -22,7 +22,7 @@ def display_data_collection_page():
         if latest_entry:
             st.session_state['age'] = latest_entry.age
             st.session_state['height'] = latest_entry.height
-            print(latest_entry)
+            print(latest_entry.height)
         else:
             st.session_state['age'] = 0
             st.session_state['height'] = 50
@@ -49,7 +49,6 @@ def display_data_collection_page():
             options=["Homme", "Femme"],
             index=st.session_state['sexe_index']
         )
-        print(sexe)
 
         height = st.number_input(
             "Taille (cm)",
