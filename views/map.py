@@ -234,3 +234,6 @@ def display_map_page():
             'Vitesse (km/h)': st.session_state.run_data['speeds'],
             'Fréquence cardiaque': st.session_state.run_data['heart_rates']
         }))
+        
+    time.sleep(1)
+    st.rerun()
