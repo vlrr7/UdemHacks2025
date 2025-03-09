@@ -13,10 +13,12 @@ def generate_content(data):
         Format the response exactly like this (pay attention to spaces and line breaks):
         
         Niveau de risque: (Faible, Modéré, Élevé)
-        Conditions potentiels: (Liste des conditions possibles)
-        Recommandations: (Conseils à suivre)
-        
-        Ne dis rien d'autre.
+        Conditions potentiels: (Liste des conditions possibles, détaille)
+        Recommandations générales: (Conseils à suivre généraux [overview])
+        Recommandations particulieres: (Conseils à suivre plus précis et détaillé. Exemples : un plan d'entrainement complet pour une semaine ou un mois, ou changer les repas / les boissons, comment gerer le temps de sommeil, etc. Ne choisi que la plus pertinente !)
+
+
+        Don't say anything else. Answer in French.
     """
     )
     print(response.text)
