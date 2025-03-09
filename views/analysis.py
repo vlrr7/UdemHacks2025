@@ -34,7 +34,7 @@ def display_analysis_page():
                 "Activité (min)": entry.activity_time,
                 "TUG (sec)": entry.timed_up_and_go_test,
                 "Amsler": entry.amsler,
-                "Score du test auditif": entry.hearing
+                "Audition": entry.hearing
             } for entry in entries]
             df = pd.DataFrame(data)
             st.dataframe(df)

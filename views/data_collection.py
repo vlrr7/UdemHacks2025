@@ -18,7 +18,7 @@ def display_data_collection_page():
         if 'age' not in st.session_state:
             st.session_state['age'] = 0
         if 'sexe' not in st.session_state:
-            st.session_state['sexe'] = "Homme / Femme"
+            st.session_state['sexe_index'] = 0
         if 'height' not in st.session_state:
             st.session_state['height'] = 50
         # Données générales
@@ -30,10 +30,11 @@ def display_data_collection_page():
             value=st.session_state['age']  # Pull value from session state
         )
 
-        sexe = st.text_input(
-            "Sexe à la naissance",
-            value=st.session_state['sexe']  # Pull value from session state
-        )
+        # sexe = st.text_input(
+        #     "Sexe à la naissance",
+        #     value=st.session_state['sexe']  # Pull value from session state
+        # )
+        sexe = st.selectbox("Sexe", ["Homme", "Femme"], index=st.session_state["sexe_index"])
         height = st.number_input(
             "Taille (cm)",
             min_value=50,
@@ -51,8 +52,8 @@ def display_data_collection_page():
         sleep = st.number_input("Heures de sommeil", min_value=0.0, step=0.5)
         activity_time = st.number_input("Temps d'activité physique (min)", min_value=0, step=1)
 
-        # Données pour ainés (optionnelles) >>> (Entrez "---" si ça ne s'applique pas à vous)
-        st.subheader("Pour les aînés (optionnel) >>> (Entrez '---'' si ça ne s'applique pas à vous)")
+        # Données pour ainés (optionnelles) >>> (Entrez '---' si ça ne s'applique pas à vous)
+        st.subheader("Pour les aînés (optionnel) >>> (Entrez '---' si ça ne s'applique pas à vous)")
         tug = st.number_input("Test de 'Timed up and go' (sec) \n- Temps que ça vous prend pour vous lever d'une position assise", min_value=0, step=1, value=0)
         amsler = st.text_input("Résultat test visuel (Amsler)\n- Instructions: Regardez le point au milieu de la grille pendant 30 secondes.\nSi les carreaux de la grille commencent à courber, notez le. Sinon, Notez 'Normal'.", value="Normal")
         st.image("amsler_image.png", caption="Amsler Test", width=300)
@@ -76,8 +77,8 @@ def display_data_collection_page():
             )
             new_entry.save()
         
-            st.session_state['age'] = age    # Save to session state
-            st.session_state['sexe'] = sexe
-            st.session_state['height'] = height
+            # st.session_state['age'] = age    # Save to session state
+            # st.session_state['sexe'] = sexe
+            # st.session_state['height'] = height
             
             st.success("Données enregistrées avec succès!")
