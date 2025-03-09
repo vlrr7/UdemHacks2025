@@ -69,6 +69,7 @@ def handle_geolocation_message():
     print("result : " + str(result))
     if result and "lat" in result:
         st.session_state.geolocation_result = (result["lat"], result["lon"])
+        #st.session_state.geolocation_received = True  # Set the flag
     elif result and "error" in result:
         st.error(f"Geolocation Error: {result['error']}")
 
@@ -126,8 +127,13 @@ def display_map_page():
         elapsed = time.time() - st.session_state.run_start
         st.session_state.elapsed = elapsed
 
-        geo = get_geolocation()
-        time.sleep(2)
+        for i in range(3):
+            geo = get_geolocation()
+            if geo is None:
+                st.info(f"🔍 Recherche du signal GPS... ({i})")
+                time.sleep(1)
+            else:
+                break
         st.info(str(geo))
         if geo and geo["coords"]:
             new_position = [geo["coords"]["latitude"], geo["coords"]["longitude"]]
