@@ -50,9 +50,9 @@ def display_data_collection_page():
         activity_time = st.number_input("Temps d'activité physique (min)", min_value=0, step=1)
 
         # Données pour ainés (optionnelles) >>> (Entrez '---' si ça ne s'applique pas à vous)
-        st.subheader("Pour les aînés (optionnel) >>> (Entrez '---' si ça ne s'applique pas à vous)")
+        st.subheader("Pour les aînés (optionnel)")
         tug = st.number_input("Test de 'Timed up and go' (sec) \n- Temps que ça vous prend pour vous lever d'une position assise", min_value=0, step=1, value=0)
-        amsler = st.text_input("Résultat test visuel (Amsler)\n- Instructions: Regardez le point au milieu de la grille pendant 30 secondes.\nSi les carreaux de la grille commencent à courber, notez le. Sinon, Notez 'Normal'.", value="Normal")
+        amsler = st.selectbox("Résultat test visuel (Amsler)\n- Instructions: Regardez le point au milieu de la grille pendant 30 secondes.\nSi les carreaux de la grille commencent à courber, notez le. Sinon, Notez 'Normal'.", options=["Très Faible", "Faible", "Normal", "Élevé"])
         st.image("amsler_image.png", caption="Amsler Test", width=300)
         hearing = st.number_input("Résultat test auditif (cm)\n- Instructions : Dites à quelqu'un de frotter leurs doigts à 7-10cm de votre oreille en s'éloignant progressivement.\nNotez la distance à laquelle vous arretez d'entendre le son du frottement des doigts.\nRépetez pour l'autre oreille.", min_value=0.0, step=0.1, value=0.0)
         if st.button("Enregistrer les données"):
