@@ -172,11 +172,10 @@ def display_map_page():
     current_hr = st.session_state.run_data['heart_rates'][-1] if st.session_state.run_data['heart_rates'] else 0
     
     with st.container():
-        cols = st.columns(4)
+        cols = st.columns(3)
         cols[0].metric("⏱️ Temps", f"{int(st.session_state.elapsed // 60)}:{int(st.session_state.elapsed % 60):02d}")
         cols[1].metric("📈 Vitesse", f"{current_speed:.1f} km/h")
-        cols[2].metric("💓 FC Actuelle", f"{current_hr} bpm")
-        cols[3].metric("🎯 Cible FC", f"{heart_rates[target_type.lower()]:.0f} bpm")
+        cols[2].metric("🎯 Cible FC", f"{heart_rates[target_type.lower()]:.0f} bpm")
         
     # Replace your existing pydeck chart code with this:
     if st.session_state.run_data['positions']:
