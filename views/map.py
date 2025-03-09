@@ -1,4 +1,3 @@
-# views/map.py
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -10,9 +9,9 @@ import pydeck as pdk
 def calculate_target_heart_rate(age):
     max_hr = 220 - age
     return {
-        'vo2max_zone': 0.85 * max_hr,
-        'anaerobic_threshold': 0.90 * max_hr,
-        'moderate': 0.70 * max_hr
+        'vo2max': 0.85 * max_hr,
+        'seuil anaérobique': 0.90 * max_hr,
+        'modéré': 0.70 * max_hr
     }
 
 def display_map_page():
@@ -25,16 +24,16 @@ def display_map_page():
     user_id = st.session_state['user_id']
     user_data = User.find_by_id(user_id)
     
-    # Section configuration
+    # Configuration
     with st.expander("Configuration de la séance"):
         age = st.number_input("Âge", value=user_data.get('age', 25))
         target_type = st.selectbox("Type d'entraînement", 
-                                ["VO2Max", "Seuil anaérobique", "Modéré"])
+                                 ["VO2Max", "Seuil anaérobique", "Modéré"])
     
     # Calcul des cibles
     heart_rates = calculate_target_heart_rate(age)
     
-    # Initialisation des données de session
+    # Initialisation données
     if 'run_data' not in st.session_state:
         st.session_state.run_data = {
             'timestamps': [],
@@ -45,7 +44,7 @@ def display_map_page():
         st.session_state.run_start = None
         st.session_state.elapsed = 0
     
-    # Contrôles de la course
+    # Contrôles
     col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("Démarrer la course"):
@@ -58,26 +57,24 @@ def display_map_page():
             st.session_state.run_data = {'timestamps': [], 'speeds': [], 'heart_rates': [], 'positions': []}
             st.session_state.elapsed = 0
 
-    # Simulation de données (à remplacer par données réelles)
+    # Simulation données
     if st.session_state.run_start:
+        elapsed = time.time() - st.session_state.run_start
+        st.session_state.elapsed = elapsed
+        
         try:
-            gps_data = st.experimental_get_query_params()
+            gps_data = st.query_params
             lat = float(gps_data.get('lat', [0])[0])
             lon = float(gps_data.get('lon', [0])[0])
             new_position = [lat, lon]
         except:
-            new_position = [48.8566, 2.3522]  # Fallback Paris
-        
+            new_position = [48.8566, 2.3522]  # Coordonnées par défaut (Paris)
 
-        # Génération de données simulées
         new_data = {
             'timestamp': datetime.now(),
-            'speed': np.random.uniform(10, 15),  # km/h
+            'speed': np.random.uniform(10, 15),
             'heart_rate': np.random.randint(120, 190),
-            'position': [
-                np.random.uniform(-0.0001, 0.0001) + 48.8566,  # Latitude 
-                np.random.uniform(-0.0001, 0.0001) + 2.3522     # Longitude
-            ]
+            'position': new_position
         }
         
         st.session_state.run_data['timestamps'].append(new_data['timestamp'])
@@ -85,13 +82,9 @@ def display_map_page():
         st.session_state.run_data['heart_rates'].append(new_data['heart_rate'])
         st.session_state.run_data['positions'].append(new_data['position'])
 
-    # Affichage des métriques
-    if st.session_state.run_data['speeds']:
-        current_speed = st.session_state.run_data['speeds'][-1]
-        current_hr = st.session_state.run_data['heart_rates'][-1]
-    else:
-        current_speed = 0
-        current_hr = 0
+    # Métriques
+    current_speed = st.session_state.run_data['speeds'][-1] if st.session_state.run_data['speeds'] else 0
+    current_hr = st.session_state.run_data['heart_rates'][-1] if st.session_state.run_data['heart_rates'] else 0
 
     metric_cols = st.columns(4)
     metric_cols[0].metric("Temps", f"{int(st.session_state.elapsed // 60)}:{int(st.session_state.elapsed % 60):02d}")
@@ -99,7 +92,7 @@ def display_map_page():
     metric_cols[2].metric("FC Actuelle", f"{current_hr} bpm")
     metric_cols[3].metric("Cible FC", f"{heart_rates[target_type.lower()]:.0f} bpm")
 
-    # Carte PyDeck
+    # Carte
     if st.session_state.run_data['positions']:
         df = pd.DataFrame({
             'lat': [pos[0] for pos in st.session_state.run_data['positions']],

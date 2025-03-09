@@ -170,7 +170,7 @@ def display_social_page():
                     if 'comparison_mode' in st.session_state and st.session_state.comparison_mode:
                         col1, col2 = st.columns(2)
                         with col1 as c:
-                            container = st.container(border=True, border_radius=10)
+                            container = st.container(border=True)
                             container.write(f"Âge : {st.session_state.comparison['user']['Âge']:.1f}")
                             container.write(f"Taille : {st.session_state.comparison['user']['Taille']:.1f} cm")
                             container.write(f"Poids : {st.session_state.comparison['user']['Poids']:.1f} kg")
