@@ -51,12 +51,12 @@ def display_parameters_page():
             # --- Supprimer le compte ---
             st.subheader("🗑️ Supprimer le compte")
             st.warning("⚠️ Cette action est irréversible. Votre compte sera définitivement supprimé.")
-            
-            delete_password = generate_password_hash(st.text_input("Entrez votre mot de passe pour confirmer", type="password"))
+
+            delete_password = st.text_input("Entrez votre mot de passe pour confirmer", type="password")
             
             if st.button("Supprimer mon compte"):
-                if user["password"] == delete_password: # Verify password
-                    users_collection.delete_one({"_id":user_id})  # Delete user from DB
+                if check_password_hash(user["password"], delete_password):  # Verify password
+                    users_collection.delete_one({"_id": (user_id)})  # Delete user from DB
                     del st.session_state['user_id']  # Clear session
                     st.success("Votre compte a été supprimé avec succès. Redirection vers la page d'accueil...")
                     st.session_state.current_page = "Accueil"

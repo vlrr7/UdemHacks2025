@@ -6,82 +6,79 @@ import math
 import pydeck as pdk
 import datetime
 import pandas as pd
-
 from streamlit_autorefresh import st_autorefresh
+from streamlit_geolocation import st_geolocation  # Composant tiers
 
+# Fonction de calcul de la distance (en mètres) entre deux points via la formule haversine
 def haversine(lat1, lon1, lat2, lon2):
-    """Calcule la distance (en mètres) entre deux points (lat, lon)."""
-    R = 6371e3
-    def rad(deg): return math.radians(deg)
-    dlat = rad(lat2 - lat1)
-    dlon = rad(lon2 - lon1)
-    a = (math.sin(dlat/2)**2 +
-         math.cos(rad(lat1))*math.cos(rad(lat2))*math.sin(dlon/2)**2)
-    c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))
-    return R*c
+    R = 6371e3  # Rayon de la Terre en mètres
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
 
 def display_map_page():
-    st.title("Course : Localisation et Chronomètre en Temps Réel")
+    st.title("Course en Temps Réel")
 
-    # Vérifier connexion
+    # Vérification de la connexion utilisateur
     if 'user_id' not in st.session_state:
         st.error("Veuillez vous connecter pour accéder à la carte.")
         return
 
-    # Initialisations
+    # Initialisations dans st.session_state
     if 'running' not in st.session_state:
         st.session_state.running = False
     if 'start_time' not in st.session_state:
         st.session_state.start_time = 0.0
     if 'trajectory' not in st.session_state:
-        st.session_state.trajectory = []  # [{lat, lon, timestamp}]
+        st.session_state.trajectory = []  # Liste des points {lat, lon, timestamp}
     if 'speeds' not in st.session_state:
-        st.session_state.speeds = []      # [(timestamp, speed_kmh)]
-    if 'last_timestamp' not in st.session_state:
-        st.session_state.last_timestamp = 0.0
+        st.session_state.speeds = []      # Liste des tuples (timestamp, speed_kmh)
 
-    # Permet un rafraîchissement toutes les 2 secondes
-    # seulement si on est en mode "running"
-    if st.session_state.running:
-        count = st_autorefresh(interval=2000, limit=None, key="map_autorefresh_counter")
+    # Affichage de la géolocalisation en temps réel via st_geolocation
+    location = st_geolocation("Veuillez autoriser l'accès à votre localisation")
+    if location is None:
+        st.warning("En attente de la localisation...")
+        return  # On quitte tant qu'on n'a pas la position
     else:
-        # Pas de refresh automatique si on n'est pas en course
-        pass
+        current_lat = location.get("latitude")
+        current_lon = location.get("longitude")
+        st.write(f"Votre position actuelle : {current_lat:.6f}, {current_lon:.6f}")
 
-    # Boutons Démarrer / Arrêter
+    # Boutons pour démarrer/arrêter la course
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Commencer", disabled=st.session_state.running):
             st.session_state.running = True
             st.session_state.start_time = time.time()
-            st.session_state.last_timestamp = st.session_state.start_time
-            st.session_state.trajectory.clear()
-            st.session_state.speeds.clear()
-
+            st.session_state.trajectory = [{"lat": current_lat, "lon": current_lon, "timestamp": time.time()}]
+            st.session_state.speeds = [(time.time(), 0.0)]
     with col2:
         if st.button("Arrêter", disabled=not st.session_state.running):
             st.session_state.running = False
 
-    # Champs manuels pour la position
-    st.subheader("Localisation actuelle")
-    # Par défaut, si on n'a pas de points, on affiche Paris
-    if len(st.session_state.trajectory) == 0:
-        default_lat, default_lon = 48.8566, 2.3522
-    else:
-        default_lat = st.session_state.trajectory[-1]["lat"]
-        default_lon = st.session_state.trajectory[-1]["lon"]
+    # Rafraîchissement automatique de la page si la course est en cours (toutes les 2 secondes)
+    if st.session_state.running:
+        st_autorefresh(interval=2000, limit=None, key="map_autorefresh")
 
-    lat_input = st.number_input("Latitude", value=default_lat, format="%.6f")
-    lon_input = st.number_input("Longitude", value=default_lon, format="%.6f")
-
-    # Afficher un bouton "Mettre à jour la position" (optionnel)
-    if st.button("Mettre à jour la position"):
-        # On ajoute un nouveau point seulement si running = True
-        # ou si c'est le premier point
-        if st.session_state.running or len(st.session_state.trajectory) == 0:
-            add_new_point(lat_input, lon_input)
+    # Mise à jour de la trajectoire et calcul de la vitesse
+    if st.session_state.running:
+        # Si la position a changé (vérifier que la nouvelle position diffère du dernier point)
+        last_point = st.session_state.trajectory[-1]
+        if abs(current_lat - last_point["lat"]) > 1e-6 or abs(current_lon - last_point["lon"]) > 1e-6:
+            now = time.time()
+            dt = now - last_point["timestamp"]
+            if dt <= 0:
+                dt = 1  # pour éviter la division par zéro
+            distance = haversine(last_point["lat"], last_point["lon"], current_lat, current_lon)
+            speed_m_s = distance / dt
+            speed_kmh = speed_m_s * 3.6
+            st.session_state.trajectory.append({"lat": current_lat, "lon": current_lon, "timestamp": now})
+            st.session_state.speeds.append((now, speed_kmh))
         else:
-            st.info("La course n'est pas démarrée, la position reste affichée mais n'affecte pas la vitesse.")
+            speed_kmh = st.session_state.speeds[-1][1]  # Pas de changement, vitesse inchangée
 
     # Chronomètre
     if st.session_state.running:
@@ -89,63 +86,20 @@ def display_map_page():
         m, s = divmod(int(elapsed), 60)
         st.write(f"**Temps écoulé :** {m:02d}:{s:02d}")
     else:
-        # Course arrêtée => si on a un historique, on affiche la durée finale
         if st.session_state.speeds:
-            total_sec = st.session_state.speeds[-1][0] - st.session_state.start_time
-            m, s = divmod(int(total_sec), 60)
-            st.write(f"Course terminée - Durée : {m:02d}:{s:02d}")
+            total_time = st.session_state.speeds[-1][0] - st.session_state.start_time
+            m, s = divmod(int(total_time), 60)
+            st.write(f"**Course terminée - Temps total :** {m:02d}:{s:02d}")
 
-    # Affichage carte PyDeck
-    display_map_and_speed_chart()
-
-
-def add_new_point(lat_new, lon_new):
-    """
-    Ajoute un nouveau point (lat_new, lon_new) au 'trajectory' 
-    et calcule la vitesse en fonction du point précédent.
-    """
-    import time
-
-    now_ts = time.time()
-    if len(st.session_state.trajectory) == 0:
-        # Premier point => vitesse = 0
-        st.session_state.trajectory.append({
-            "lat": lat_new,
-            "lon": lon_new,
-            "timestamp": now_ts
-        })
-        st.session_state.speeds.append((now_ts, 0.0))
-        st.session_state.last_timestamp = now_ts
-    else:
-        # Comparer au dernier point
-        last_pt = st.session_state.trajectory[-1]
-        dist_m = haversine(last_pt["lat"], last_pt["lon"], lat_new, lon_new)
-        dt = now_ts - st.session_state.last_timestamp
-        if dt < 0.1:
-            dt = 0.1  # pour éviter une division par 0 si trop rapide
-        speed_m_s = dist_m / dt
-        speed_kmh = speed_m_s * 3.6
-
-        st.session_state.trajectory.append({
-            "lat": lat_new,
-            "lon": lon_new,
-            "timestamp": now_ts
-        })
-        st.session_state.speeds.append((now_ts, speed_kmh))
-        st.session_state.last_timestamp = now_ts
-
-
-def display_map_and_speed_chart():
-    """Affiche la carte PyDeck + le graphique de vitesse, qu'on soit running ou pas."""
+    # Affichage de la carte avec PyDeck
     if st.session_state.trajectory:
         df_points = pd.DataFrame(st.session_state.trajectory)
-        # Créer la "ligne" du parcours
+        # Créer une liste de segments pour tracer la trajectoire
         line_data = []
         for i in range(len(df_points) - 1):
             p1 = df_points.iloc[i]
             p2 = df_points.iloc[i+1]
             line_data.append([[p1["lon"], p1["lat"]], [p2["lon"], p2["lat"]]])
-
         line_layer = pdk.Layer(
             "PathLayer",
             data=line_data,
@@ -155,7 +109,6 @@ def display_map_and_speed_chart():
             get_color=[255, 0, 0],
             pickable=True
         )
-
         point_layer = pdk.Layer(
             "ScatterplotLayer",
             data=df_points,
@@ -163,27 +116,23 @@ def display_map_and_speed_chart():
             get_color=[0, 128, 255],
             get_radius=30,
         )
-
         last_point = df_points.iloc[-1]
         view_state = pdk.ViewState(
             longitude=last_point["lon"],
             latitude=last_point["lat"],
-            zoom=14
+            zoom=15
         )
-
-        r = pdk.Deck(
+        deck = pdk.Deck(
             layers=[line_layer, point_layer],
             initial_view_state=view_state,
             map_style="mapbox://styles/mapbox/streets-v11"
         )
-        st.pydeck_chart(r)
+        st.pydeck_chart(deck)
 
     # Graphique de vitesse
     if st.session_state.speeds:
-        df_speeds = pd.DataFrame(st.session_state.speeds, columns=["timestamp", "speed_kmh"])
-        df_speeds["time"] = df_speeds["timestamp"].apply(
-            lambda t: datetime.datetime.fromtimestamp(t).strftime("%H:%M:%S")
-        )
-        df_speeds.set_index("time", inplace=True)
-        st.line_chart(df_speeds["speed_kmh"])
+        df_speed = pd.DataFrame(st.session_state.speeds, columns=["timestamp", "speed_kmh"])
+        df_speed["time"] = df_speed["timestamp"].apply(lambda t: datetime.datetime.fromtimestamp(t).strftime("%H:%M:%S"))
+        df_speed.set_index("time", inplace=True)
+        st.line_chart(df_speed["speed_kmh"])
         st.write("Évolution de la vitesse (km/h).")
