@@ -48,20 +48,20 @@ def display_analysis_page():
             graph_options = ["Taille", "Poids", "IMC", "Eau", "Calories", "Sommeil", "Activité", "TUG", "Audition"]
 
             # Selecteur de graphe
-            with st.container():
-                with col1:
-                    selected_graph = st.selectbox("Sélectionner un graphe", options=graph_options, key="selected_graph")
+            with col1:
+                selected_graph = st.selectbox("Sélectionner un graphe", options=graph_options, key="selected_graph")
 
-                # Bouton pour afficher/supprimer le graphe
-                with col2:
-                    if 'graph' in st.session_state and st.session_state.graph == selected_graph:
-                        if st.button(f"Supprimer {selected_graph}"):
-                            del st.session_state.graph
-                            st.rerun()
-                    else:
-                        if st.button(f"Afficher {selected_graph}"):
-                            st.session_state.graph = selected_graph
-                            st.rerun()
+            # Bouton pour afficher/supprimer le graphe
+            with col2:
+                st.empty()
+                if 'graph' in st.session_state and st.session_state.graph == selected_graph:
+                    if st.button(f"Supprimer {selected_graph}"):
+                        del st.session_state.graph
+                        st.rerun()
+                else:
+                    if st.button(f"Afficher {selected_graph}"):
+                        st.session_state.graph = selected_graph
+                        st.rerun()
 
             # Zone fixe pour les graphiques
             graph_placeholder = st.empty()
