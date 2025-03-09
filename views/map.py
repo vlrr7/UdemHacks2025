@@ -5,35 +5,44 @@ import time
 import math
 import pydeck as pdk
 import datetime
+import pandas as pd
 
+from streamlit_autorefresh import st_autorefresh
+
+# Fonction de distance
 def haversine(lat1, lon1, lat2, lon2):
-    R = 6371e3
-    phi1, phi2 = map(math.radians, [lat1, lat2])
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lon2 - lon1)
-    a = (math.sin(dphi/2)**2 +
-         math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2)
-    return R * 2*math.atan2(math.sqrt(a), math.sqrt(1-a))  # en mètres
+    R = 6371e3  # mètres
+    def rad(deg): return math.radians(deg)
+    dlat = rad(lat2 - lat1)
+    dlon = rad(lon2 - lon1)
+    a = (math.sin(dlat/2)**2 +
+         math.cos(rad(lat1))*math.cos(rad(lat2))*math.sin(dlon/2)**2)
+    c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))
+    return R*c  # en mètres
 
 def display_map_page():
-    st.title("Activité de Course - Suivi en Temps Réel (version Timer)")
-    
+    st.title("Activité de Course - Suivi en Temps Réel (Auto-Refresh)")
+
+    # Vérifier connexion utilisateur
     if 'user_id' not in st.session_state:
         st.error("Veuillez vous connecter pour accéder à la carte.")
         return
-    
-    # Initialisation
+
+    # Initialiser les variables en session_state
     if 'running' not in st.session_state:
         st.session_state.running = False
     if 'start_time' not in st.session_state:
-        st.session_state.start_time = 0
+        st.session_state.start_time = 0.0
     if 'trajectory' not in st.session_state:
-        st.session_state.trajectory = []
+        st.session_state.trajectory = []  # liste de dict {lat, lon, timestamp}
     if 'speeds' not in st.session_state:
-        st.session_state.speeds = []
-    if 'last_update' not in st.session_state:
-        st.session_state.last_update = 0.0  # Pour gérer le refresh
+        st.session_state.speeds = []      # liste de (timestamp, speed_kmh)
 
+    # Barre de refresh automatique : toutes les 2 secondes
+    # => la variable "count" s’incrémente à chaque refresh
+    count = st_autorefresh(interval=2000, limit=None, key="map_autorefresh_counter")
+
+    # Boutons de contrôle
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Commencer", disabled=st.session_state.running):
@@ -46,52 +55,51 @@ def display_map_page():
         if st.button("Arrêter", disabled=not st.session_state.running):
             st.session_state.running = False
 
-    # Affichage du chrono
+    # Afficher le chrono si running
     if st.session_state.running:
-        elapsed_sec = time.time() - st.session_state.start_time
-        m, s = divmod(int(elapsed_sec), 60)
-        st.write(f"**Temps écoulé** : {m:02d}:{s:02d}")
+        elapsed = time.time() - st.session_state.start_time
+        m, s = divmod(int(elapsed), 60)
+        st.write(f"**Temps écoulé :** {m:02d}:{s:02d}")
 
-        # Simuler la localisation + calculer vitesse
+        # Simulation de la position
         if len(st.session_state.trajectory) == 0:
+            # Point de départ (Paris)
             lat0, lon0 = 48.8566, 2.3522
         else:
             lat0 = st.session_state.trajectory[-1]["lat"]
             lon0 = st.session_state.trajectory[-1]["lon"]
-        lat_new = lat0 + 0.0001  # Simulation
+
+        # Déplacement fictif de 0.0001° par "refresh"
+        lat_new = lat0 + 0.0001
         lon_new = lon0
 
-        dist_m = 0
-        speed_kmh = 0
+        # Calculer la vitesse (distance / temps)
         if len(st.session_state.trajectory) > 0:
+            # distance en m depuis le dernier point
             dist_m = haversine(lat0, lon0, lat_new, lon_new)
-            speed_kmh = (dist_m * 3.6)  # Sur 1 seconde => simplification
+            # On suppose 2 secondes entre deux refresh => dt=2
+            # (Vous pouvez affiner si vous stockez le timestamp précédent)
+            dt = 2
+            speed_m_s = dist_m / dt
+            speed_kmh = speed_m_s * 3.6
+        else:
+            speed_kmh = 0.0
 
-        st.session_state.trajectory.append({
-            "lat": lat_new,
-            "lon": lon_new,
-            "timestamp": time.time()
-        })
+        # Stocker la position + vitesse
+        st.session_state.trajectory.append({"lat": lat_new, "lon": lon_new, "timestamp": time.time()})
         st.session_state.speeds.append((time.time(), speed_kmh))
 
-        # On rafraîchit la page seulement toutes les 2 secondes
-        now = time.time()
-        if now - st.session_state.last_update > 2:
-            st.session_state.last_update = now
-            st.experimental_rerun()
-
     else:
-        # Activité terminée ?
+        # Si l'activité n'est pas en cours => afficher un résumé si speeds existe
         if st.session_state.speeds:
             total_sec = st.session_state.speeds[-1][0] - st.session_state.start_time
             m, s = divmod(int(total_sec), 60)
             st.write(f"Activité terminée - Temps total : {m:02d}:{s:02d}")
 
-    # Affichage de la map
+    # Afficher la trajectoire sur la carte
     if st.session_state.trajectory:
-        import pandas as pd
         df_points = pd.DataFrame(st.session_state.trajectory)
-        # PathLayer
+        # Path
         line_data = []
         for i in range(len(df_points) - 1):
             p1 = df_points.iloc[i]
@@ -99,13 +107,14 @@ def display_map_page():
             line_data.append([[p1["lon"], p1["lat"]], [p2["lon"], p2["lat"]]])
         line_layer = pdk.Layer(
             "PathLayer",
-            line_data,
+            data=line_data,
             get_path="object",
             get_width=5,
             width_min_pixels=2,
             get_color=[255, 0, 0],
             pickable=True
         )
+        # Points
         point_layer = pdk.Layer(
             "ScatterplotLayer",
             data=df_points,
@@ -117,7 +126,7 @@ def display_map_page():
         view_state = pdk.ViewState(
             longitude=last_point["lon"],
             latitude=last_point["lat"],
-            zoom=15
+            zoom=14
         )
         r = pdk.Deck(
             layers=[line_layer, point_layer],
@@ -128,7 +137,6 @@ def display_map_page():
 
     # Graphique de vitesse
     if st.session_state.speeds:
-        import pandas as pd
         df_speeds = pd.DataFrame(st.session_state.speeds, columns=["timestamp", "speed_kmh"])
         df_speeds["time"] = df_speeds["timestamp"].apply(
             lambda t: datetime.datetime.fromtimestamp(t).strftime("%H:%M:%S")
