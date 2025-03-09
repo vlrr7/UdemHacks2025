@@ -29,7 +29,10 @@ def display_data_collection_page():
         if 'sexe_index' not in st.session_state:
             st.session_state['sexe_index'] = 0
         else:
-            st.session_state['sexe_index'] = ["Homme", "Femme"].index(latest_entry.sexe)
+            try:
+                st.session_state['sexe_index'] = ["Homme", "Femme"].index(latest_entry.sexe)
+            except ValueError:
+                st.session_state['sexe_index'] = 0
 
         # Données générales
         st.subheader("Informations générales")
